@@ -3,169 +3,207 @@
 #include "../poly/evaluations.h"
 #include "fluxes.h"
 
-int ind(int i, int t, int nt) { return i * nt + t; }
+void update_inds(iVecr inds, iVecr bounds) {
 
-int ind(int i, int j, int t, int ny, int nt) { return (i * ny + j) * nt + t; }
+  for (int i = inds.size() - 1; i >= 0; i--) {
 
-void centers_inner(Vecr u, Vecr rec, iVecr nX, Vecr dX, int nt, int t,
-                   double wght_t, Vecr WGHTS, int N, int V) {
+    inds(i) += 1;
 
-  Mat dqh_dx(N * N, V);
-  Mat dqh_dy(N * N, V);
-
-  Vec qs(V);
-  Vec dqdxs(V);
-  Vec dqdys(V);
-  Vec S(V);
-  Vec tmpx(V);
-  Vec tmpy(V);
-
-  for (int i = 0; i < nX(0); i++)
-    for (int j = 0; j < nX(1); j++) {
-
-      int idx = ind(i + 1, j + 1, t, nX(1) + 2, nt) * N * N * V;
-
-      MatMap qh(rec.data() + idx, OuterStride(V));
-      derivs(dqh_dx, qh, 0);
-      derivs(dqh_dy, qh, 1);
-
-      for (int a = 0; a < N; a++)
-        for (int b = 0; b < N; b++) {
-          int s = a * N + b;
-          qs = qh.row(s);
-          dqdxs = dqh_dx.row(s);
-          dqdys = dqh_dy.row(s);
-
-          source(S, qs);
-
-          Bdot(tmpx, qs, dqdxs, 0);
-          Bdot(tmpy, qs, dqdys, 1);
-
-          S -= tmpx / dx;
-          S -= tmpy / dy;
-
-          u.segment((i * nX(1) + j) * V, V) += wght_t * WGHTS(a) * WGHTS(b) * S;
-        }
+    if (inds(i) == bounds(i)) {
+      inds(i) = 0;
+    } else {
+      break;
     }
+  }
 }
 
-void centers(Vecr u, Vecr rec, iVecr nX, double dt, Vecr dX, Vecr WGHTS) {
+int index(iVecr inds, iVecr bounds, int offset) {
 
-  for (int t = 0; t < N; t++)
-    centers_inner(u, rec, nX, dX, N, t, dt * WGHTS(t), WGHTS);
+  int ret = inds(0) + offset;
+
+  for (int i = 1; i < inds.size(); i++) {
+    ret *= bounds(i);
+    ret += inds(i) + offset;
+  }
 }
 
-void interfs_inner(Vecr u, Vecr rec, iVecr nX, Vecr dX, int nt, int t,
-                   double wghts_t, int FLUX, Vecr NODES, Vecr WGHTS,
-                   Matr ENDVALS, int N, int V) {
+void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
+             Vecr u, Vecr rec, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
+             Matr DERVALS) {
 
-  Mat q0(N, V);
-  Mat q1(N, V);
+  int ndim = nX.size();
+  int N = WGHTS.size();
+  int V = u.size() / nX.prod();
+
+  int Nd = pow(N, ndim);
+
+  iVec innerBounds = iVec::Constant(ndim, N);
+
+  iVec nX2 = nX;
+  nX2.array() += 2;
+
+  Mat dqh_dx(Nd, V);
+  std::vector<Mat> dq(ndim);
+  for (int d = 0; d < ndim; d++)
+    dq[d] = dqh_dx;
+
+  Mat b(V, V);
+  Vec s(V);
+
+  iVec indsOuter = iVec::Zero(ndim);
+  iVec indsInner = iVec::Zero(ndim);
+
+  int uCell = 0;
+  while (uCell < nX.prod()) {
+
+    int recCell = index(indsOuter, nX2, 1);
+
+    for (int t = 0; t < N; t++) {
+
+      int tCell = (recCell * N + t) * Nd * V;
+
+      MatMap qh(rec.data() + tCell, Nd, V, OuterStride(V));
+
+      for (int d = 0; d < ndim; d++)
+        derivs(dq[d], qh, d, DERVALS, ndim);
+
+      int idx = 0;
+      while (idx < Nd) {
+
+        if (S == NULL)
+          s.setZero();
+        else
+          S(s.data(), qh.row(idx).data());
+
+        if (B != NULL)
+          for (int d = 0; d < ndim; d++) {
+            B(b.data(), qh.row(idx).data(), d);
+            s -= b * dq[d].row(idx) / dX(d);
+          }
+
+        double tmp = dt * WGHTS(t);
+
+        for (int i = 0; i < ndim; i++)
+          tmp *= WGHTS(indsInner[i]);
+
+        u.segment(uCell * V, V) += tmp * s;
+
+        update_inds(indsInner, innerBounds);
+        idx++;
+      }
+    }
+
+    update_inds(indsOuter, nX);
+    uCell++;
+  }
+}
+
+void interfs(void (*F)(double *, double *, int),
+             void (*B)(double *, double *, int), Vecr u, Vecr rec, iVecr nX,
+             double dt, Vecr dX, int FLUX, Vecr NODES, Vecr WGHTS,
+             Matr ENDVALS) {
+
+  int ndim = nX.size();
+  int N = NODES.size();
+  int V = u.size() / nX.prod();
+
+  int Nd = pow(N, ndim);
+  int Nd_ = pow(N, ndim - 1);
+
+  iVec innerBounds = iVec::Constant(ndim - 1, N);
+
   Vec f(V);
-  Vec b(V);
-  Vec u0(V);
-  Vec u1(V);
+  Vec b = Vec::Zero(V);
 
-  Vec xWGHTS = wghts_t / (2. * dX(0)) * WGHTS;
-  Vec yWGHTS = wghts_t / (2. * dX(1)) * WGHTS;
+  Mat q0(Nd_, V);
+  Mat q1(Nd_, V);
 
-  int NNV = N * N * V;
+  iVec nX1 = nX;
+  iVec nX2 = nX;
+  nX1.array() += 1;
+  nX2.array() += 2;
 
-  for (int i = 0; i < nX(0) + 1; i++)
-    for (int j = 0; j < nX(1) + 1; j++) {
+  iVec indsOuter = iVec::Zero(ndim);
+  iVec indsInner = iVec::Zero(ndim - 1);
 
-      int uind0 = ind(i - 1, j - 1, nX(1)) * V;
-      int ind0 = ind(i, j, t, nX(1) + 2, nt) * NNV;
-      MatMap qh0(rec.data() + ind0, OuterStride(V));
+  int uCell = 0;
+  while (uCell < nX1.prod()) { // (i = 0 ... (nX+1); j = 0 ... (nY+1); etc
 
-      int uindx = ind(i, j - 1, nX(1)) * V;
-      int indx = ind(i + 1, j, t, nX(1) + 2, nt) * NNV;
+    int uind0 = index(indsOuter, nX, -1) * V; // (i-1, j-2, ...)
 
-      MatMap qhx(rec.data() + indx, OuterStride(V));
-      endpts(q0, qh0, 0, 1, ENDVALS);
-      endpts(q1, qhx, 0, 0, ENDVALS);
+    for (int t = 0; t < WGHTS.size(); t++) {
 
-      u0.setZero(V);
-      u1.setZero(V);
+      int ind0 = (index(indsOuter, nX2, 0) * N + t) * Nd * V;
+      MatMap qh0(rec.data() + ind0, Nd, V, OuterStride(V));
 
-      for (int s = 0; s < N; s++) {
+      for (int d = 0; d < ndim; d++) {
 
-        switch (FLUX) {
-        case OSHER:
-          f = D_OSH(q0.row(s), q1.row(s), 0, NODES, WGHTS);
-          break;
-        case ROE:
-          f = D_ROE(q0.row(s), q1.row(s), 0, NODES, WGHTS);
-          break;
-        case RUSANOV:
-          f = D_RUS(q0.row(s), q1.row(s), 0);
-          break;
+        int ind = indsOuter(d);
+        double c = dt * WGHTS(t) / (2. * dX(d));
+
+        indsOuter(d) += 1;
+        int uind1 = index(indsOuter, nX, -1) * V;
+        int ind1 = (index(indsOuter, nX2, 0) * N + t) * Nd * V;
+        indsOuter(d) -= 1;
+
+        MatMap qh1(rec.data() + ind1, Nd, V, OuterStride(V));
+
+        endpts(q0, qh0, d, 1, ENDVALS, ndim);
+        endpts(q1, qh1, d, 0, ENDVALS, ndim);
+
+        int idx = 0;
+        while (idx < Nd_) {
+
+          switch (FLUX) {
+          case OSHER:
+            f = D_OSH(F, B, q0.row(idx), q1.row(idx), d, NODES, WGHTS);
+            break;
+          case ROE:
+            f = D_ROE(F, B, q0.row(idx), q1.row(idx), d, NODES, WGHTS);
+            break;
+          case RUSANOV:
+            f = D_RUS(F, B, q0.row(idx), q1.row(idx), d);
+            break;
+          }
+
+          if (B != NULL)
+            b = Bint(B, q0.row(idx), q1.row(idx), 0, NODES, WGHTS);
+
+          double tmp = c;
+          for (int i = 0; i < ndim - 1; i++)
+            tmp *= WGHTS(indsInner[i]);
+
+          if (ind > 0)
+            u.segment(uind0, V) -= tmp * (b + f);
+          if (ind < nX(d))
+            u.segment(uind1, V) -= tmp * (b - f);
+
+          update_inds(indsInner, innerBounds);
+          idx++;
         }
-        b = Bint(q0.row(s), q1.row(s), 0, NODES, WGHTS);
-
-        if (i > 0)
-          u0 += xWGHTS(s) * (b + f);
-        if (i < nX(0))
-          u1 += xWGHTS(s) * (b - f);
       }
-      if (i > 0)
-        u.segment(uind0, V) -= u0;
-      if (i < nX(0))
-        u.segment(uindx, V) -= u1;
-
-      int uindy = ind(i - 1, j, nX(1)) * V;
-      int indy = ind(i, j + 1, t, nX(1) + 2, nt) * NNV;
-
-      MatMap qhy(rec.data() + indy, OuterStride(V));
-      endpts(q0, qh0, 1, 1, ENDVALS);
-      endpts(q1, qhy, 1, 0, ENDVALS);
-
-      u0.setZero(V);
-      u1.setZero(V);
-
-      for (int s = 0; s < N; s++) {
-
-        switch (FLUX) {
-        case OSHER:
-          f = D_OSH(q0.row(s), q1.row(s), 1, NODES, WGHTS);
-          break;
-        case ROE:
-          f = D_ROE(q0.row(s), q1.row(s), 1, NODES, WGHTS);
-          break;
-        case RUSANOV:
-          f = D_RUS(q0.row(s), q1.row(s), 1);
-          break;
-        }
-        b = Bint(q0.row(s), q1.row(s), 1, NODES, WGHTS);
-
-        if (j > 0)
-          u0 += yWGHTS(s) * (b + f);
-        if (j < nX(1))
-          u1 += yWGHTS(s) * (b - f);
-      }
-      if (j > 0)
-        u.segment(uind0, V) -= u0;
-      if (j < nX(1))
-        u.segment(uindy, V) -= u1;
     }
+
+    update_inds(indsOuter, nX1);
+    uCell++;
+  }
 }
 
-void interfs(Vecr u, Vecr rec, iVecr nX, double dt, Vecr dX, int FLUX,
-             Vecr NODES, Vecr WGHTS, Matr ENDVALS, int N, int V) {
-
-  for (int t = 0; t < WGHTS.size(); t++)
-    interfs_inner(u, rec, nX, dX, N, t, dt * WGHTS(t), FLUX, NODES, WGHTS,
-                  ENDVALS, N, V);
-}
-
-void fv_launcher(Vecr u, Vecr rec, iVecr nX, double dt, Vecr dX, int FLUX) {
+void fv_launcher(void (*F)(double *, double *, int),
+                 void (*B)(double *, double *, int),
+                 void (*S)(double *, double *), Vecr u, Vecr rec, iVecr nX,
+                 double dt, Vecr dX, int FLUX, int N) {
 
   Vec NODES = scaled_nodes(N);
   Vec WGHTS = scaled_weights(N);
   std::vector<poly> basis = basis_polys(N);
-  Mat ENDVALS = end_values(basis);
 
-  int ndim = nX.size();
-  centers(u, rec, nX, dt, dX, WGHTS);
-  interfs(u, rec, nX, dt, dX, FLUX, NODES, WGHTS, ENDVALS, N, V);
+  Mat ENDVALS = end_values(basis);
+  Mat DERVALS = derivative_values(basis, NODES);
+
+  if (B != NULL || S != NULL)
+    centers(B, S, u, rec, nX, dt, dX, WGHTS, DERVALS);
+
+  if (F != NULL || B != NULL)
+    interfs(F, B, u, rec, nX, dt, dX, FLUX, NODES, WGHTS, ENDVALS);
 }

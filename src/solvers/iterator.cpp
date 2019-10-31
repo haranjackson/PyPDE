@@ -4,7 +4,6 @@
 #include "../etc/types.h"
 #include "dg/dg.h"
 #include "fv/fv.h"
-#include "steppers.h"
 #include "weno/weno.h"
 
 void stepper(Vecr u, Vecr ub, iVecr nX, double dt, Vecr dX, bool STIFF,

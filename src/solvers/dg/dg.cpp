@@ -18,9 +18,10 @@ void initial_guess(Matr q, Matr w) {
     }
 }
 
-Mat rhs(Matr q, Matr Ww, double dt, double dx, double dy, int N, int V,
-        Matr DERVALS, Vecr WGHTS, Matr DG_DER) {
+Mat rhs(Matr q, Matr Ww, double dt, Vecr dX, int N, int V, Matr DERVALS,
+        Vecr WGHTS, Matr DG_DER) {
 
+  int ndim = dX.size();
   Mat ret(N * N * N, V);
   Mat dq_dx(N * N * N, V);
   Mat dq_dy(N * N * N, V);
@@ -33,9 +34,9 @@ Mat rhs(Matr q, Matr Ww, double dt, double dx, double dy, int N, int V,
 
   for (int t = 0; t < N; t++) {
     derivs(dq_dx.block(t * N * N, 0, N * N, V), q.block(t * N * N, 0, N * N, V),
-           0, DERVALS);
+           0, DERVALS, ndim);
     derivs(dq_dy.block(t * N * N, 0, N * N, V), q.block(t * N * N, 0, N * N, V),
-           1, DERVALS);
+           1, DERVALS, ndim);
   }
   dq_dx /= dx;
   dq_dy /= dy;

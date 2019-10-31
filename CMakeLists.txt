@@ -20,7 +20,6 @@ add_library(ader SHARED
             src/scipy/poly.cpp
 
             src/solvers/iterator.cpp
-            src/solvers/steppers.cpp
 
             src/solvers/fv/fluxes.cpp
             src/solvers/fv/fv.cpp
