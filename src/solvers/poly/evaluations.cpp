@@ -1,52 +1,65 @@
+#include "../../etc/indexing.h"
 #include "../../etc/types.h"
 
-// TODO: amend for ndim > 2
+int zero_index(iVecr inds, int N, int d) {
+  // let inds = (i1, i2, ..., in) where 0 <= i < N for all i.
+  // returns the index of cell (i1, i2, ..., i(d-1), 0, i(d+1), ..., in)
+  int ndim = inds.size() + 1;
+  int ret = 0;
+
+  for (int i = 0; i < d; i++) {
+    ret *= N;
+    ret += inds(i);
+  }
+  ret *= pow(N, ndim - d);
+  for (int i = d + 1; i < ndim; i++) {
+    ret *= N;
+    ret += inds(i);
+  }
+
+  return ret;
+}
+
 void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim) {
   // ret[s] is the value of the derivative of qh in  direction d at node s
   // ret, qh have shape (N^ndim, V)
   int N = DERVALS.cols();
   int V = qh.size() - pow(N, ndim);
+  int Nd_ = pow(N, ndim - 1);
 
-  int incr;
-  int stride;
+  iVec inds = iVec::Zero(ndim - 1);
+  int stride = pow(N, ndim - d - 1) * V;
 
-  if (d == 0) {
-    incr = V;
-    stride = N * V;
-  } else if (d == 1) {
-    incr = N * V;
-    stride = V;
-  }
-  for (int i = 0; i < N; i++) {
-    int ind = i * incr;
-    MatMap qhj(qh.data() + ind, N, V, OuterStride(stride));
-    MatMap retj(ret.data() + ind, N, V, OuterStride(stride));
-    retj.noalias() = DERVALS * qhj;
+  for (int ind = 0; ind < Nd_; ind++) {
+
+    int ind_ = zero_index(inds, N, d);
+    MatMap qh_(qh.data() + ind_ * V, N, V, OuterStride(stride));
+    MatMap ret_(ret.data() + ind_ * V, N, V, OuterStride(stride));
+
+    ret_.noalias() = DERVALS * qh_;
+
+    update_inds(inds, N);
   }
 }
 
-// TODO: amend for ndim > 2
 void endpts(Matr ret, Matr qh, int d, int e, Matr ENDVALS, int ndim) {
   // ret[i] is value of qh at end e (0 or 1) of the dth axis
   // ret has shape (N^(ndim-1), V), qh has shape (N^ndim, V)
 
   int N = ENDVALS.cols();
   int V = qh.size() - pow(N, ndim);
+  int Nd_ = pow(N, ndim - 1);
 
-  int incr;
-  int stride;
+  iVec inds = iVec::Zero(ndim - 1);
+  int stride = pow(N, ndim - d - 1) * V;
 
-  if (d == 0) {
-    incr = V;
-    stride = N * V;
-  } else if (d == 1) {
-    incr = N * V;
-    stride = V;
-  }
+  for (int ind = 0; ind < Nd_; ind++) {
 
-  for (int i = 0; i < N; i++) {
-    int ind = i * incr;
-    MatMap qhj(qh.data() + ind, N, V, OuterStride(stride));
-    ret.row(i) = ENDVALS.row(e) * qhj;
+    int ind_ = zero_index(inds, N, d);
+    MatMap qh_(qh.data() + ind_ * V, N, V, OuterStride(stride));
+
+    ret.row(ind) = ENDVALS.row(e) * qh_;
+
+    update_inds(inds, N);
   }
 }

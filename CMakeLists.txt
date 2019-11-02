@@ -13,6 +13,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 add_library(ader SHARED 
             src/etc/grid.cpp
+            src/etc/indexing.cpp
 
             src/scipy/legendre.cpp
             src/scipy/lgmres.cpp

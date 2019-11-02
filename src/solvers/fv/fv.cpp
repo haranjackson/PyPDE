@@ -1,31 +1,8 @@
+#include "../../etc/indexing.h"
 #include "../../etc/types.h"
 #include "../poly/basis.h"
 #include "../poly/evaluations.h"
 #include "fluxes.h"
-
-void update_inds(iVecr inds, iVecr bounds) {
-
-  for (int i = inds.size() - 1; i >= 0; i--) {
-
-    inds(i) += 1;
-
-    if (inds(i) == bounds(i)) {
-      inds(i) = 0;
-    } else {
-      break;
-    }
-  }
-}
-
-int index(iVecr inds, iVecr bounds, int offset) {
-
-  int ret = inds(0) + offset;
-
-  for (int i = 1; i < inds.size(); i++) {
-    ret *= bounds(i);
-    ret += inds(i) + offset;
-  }
-}
 
 void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
              Vecr u, Vecr rec, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
@@ -36,8 +13,6 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
   int V = u.size() / nX.prod();
 
   int Nd = pow(N, ndim);
-
-  iVec innerBounds = iVec::Constant(ndim, N);
 
   iVec nX2 = nX;
   nX2.array() += 2;
@@ -88,7 +63,7 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
 
         u.segment(uCell * V, V) += tmp * s;
 
-        update_inds(indsInner, innerBounds);
+        update_inds(indsInner, N);
         idx++;
       }
     }
@@ -109,8 +84,6 @@ void interfs(void (*F)(double *, double *, int),
 
   int Nd = pow(N, ndim);
   int Nd_ = pow(N, ndim - 1);
-
-  iVec innerBounds = iVec::Constant(ndim - 1, N);
 
   Vec f(V);
   Vec b = Vec::Zero(V);
@@ -178,7 +151,7 @@ void interfs(void (*F)(double *, double *, int),
           if (ind < nX(d))
             u.segment(uind1, V) -= tmp * (b - f);
 
-          update_inds(indsInner, innerBounds);
+          update_inds(indsInner, N);
           idx++;
         }
       }

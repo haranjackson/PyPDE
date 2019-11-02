@@ -1,6 +1,9 @@
 #ifndef NUMERICAL_DIFF_H
 #define NUMERICAL_DIFF_H
 
+#include "eigen3/Core"
+#include <cassert>
+
 enum NumericalDiffMode { Forward, Central };
 
 Mat df(void (*F)(double *, double *, int), Vecr q, int d,
@@ -10,7 +13,8 @@ Mat df(void (*F)(double *, double *, int), Vecr q, int d,
   using std::sqrt;
 
   double h;
-  const double eps = sqrt(((std::max)(epsfcn, NumTraits<double>::epsilon())));
+  const double eps =
+      sqrt(((std::max)(0., Eigen::NumTraits<double>::epsilon())));
 
   int n = q.size();
   Mat jac(n, n);

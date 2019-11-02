@@ -38,8 +38,8 @@ Mat rhs(Matr q, Matr Ww, double dt, Vecr dX, int N, int V, Matr DERVALS,
     derivs(dq_dy.block(t * N * N, 0, N * N, V), q.block(t * N * N, 0, N * N, V),
            1, DERVALS, ndim);
   }
-  dq_dx /= dx;
-  dq_dy /= dy;
+  dq_dx /= dX(0);
+  dq_dy /= dX(1);
 
   int ind = 0;
   for (int t = 0; t < N; t++)
@@ -83,11 +83,11 @@ Mat rhs(Matr q, Matr Ww, double dt, Vecr dX, int N, int V, Matr DERVALS,
   return ret;
 }
 
-Vec obj(Vecr q, Matr Ww, double dt, double dx, double dy, int N, int V,
-        Matr DG_MAT, Matr DERVALS, Matr DG_DER, Vecr WGHTS) {
+Vec obj(Vecr q, Matr Ww, double dt, Vecr dX, int N, int V, Matr DG_MAT,
+        Matr DERVALS, Matr DG_DER, Vecr WGHTS) {
 
   MatMap qmat(q.data(), OuterStride(V));
-  Mat tmp = rhs(qmat, Ww, dt, dx, dy, N, V, DERVALS, WGHTS, DG_DER);
+  Mat tmp = rhs(qmat, Ww, dt, dX, N, V, DERVALS, WGHTS, DG_DER);
 
   for (int t = 0; t < N; t++)
     for (int k = 0; k < N; k++)
