@@ -5,12 +5,12 @@
 #include "fluxes.h"
 
 void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
-             Vecr u, Matr qh, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
+             Matr u, Matr qh, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
              Matr DERVALS) {
 
   int ndim = nX.size();
   int N = WGHTS.size();
-  int V = u.size() / nX.prod();
+  int V = u.cols();
 
   int Nd = pow(N, ndim);
 
@@ -61,7 +61,7 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
         for (int i = 0; i < ndim; i++)
           tmp *= WGHTS(indsInner[i]);
 
-        u.segment(uCell * V, V) += tmp * s;
+        u.row(uCell) += tmp * s;
 
         update_inds(indsInner, N);
         idx++;
@@ -74,13 +74,13 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
 }
 
 void interfs(void (*F)(double *, double *, int),
-             void (*B)(double *, double *, int), Vecr u, Matr qh, iVecr nX,
+             void (*B)(double *, double *, int), Matr u, Matr qh, iVecr nX,
              double dt, Vecr dX, int FLUX, Vecr NODES, Vecr WGHTS,
              Matr ENDVALS) {
 
   int ndim = nX.size();
   int N = NODES.size();
-  int V = u.size() / nX.prod();
+  int V = u.cols();
 
   int Nd = pow(N, ndim);
   int Nd_ = pow(N, ndim - 1);
@@ -102,7 +102,7 @@ void interfs(void (*F)(double *, double *, int),
   int uCell = 0;
   while (uCell < nX1.prod()) { // (i = 0 ... (nX+1); j = 0 ... (nY+1); etc
 
-    int uind0 = index(indsOuter, nX, -1) * V; // (i-1, j-2, ...)
+    int uind0 = index(indsOuter, nX, -1); // (i-1, j-2, ...)
 
     for (int t = 0; t < WGHTS.size(); t++) {
 
@@ -115,7 +115,7 @@ void interfs(void (*F)(double *, double *, int),
         double c = dt * WGHTS(t) / (2. * dX(d));
 
         indsOuter(d) += 1;
-        int uind1 = index(indsOuter, nX, -1) * V;
+        int uind1 = index(indsOuter, nX, -1);
         int ind1 = (index(indsOuter, nX2, 0) * N + t) * Nd * V;
         indsOuter(d) -= 1;
 
@@ -147,9 +147,9 @@ void interfs(void (*F)(double *, double *, int),
             tmp *= WGHTS(indsInner[i]);
 
           if (ind > 0)
-            u.segment(uind0, V) -= tmp * (b + f);
+            u.row(uind0) -= tmp * (b + f);
           if (ind < nX(d))
-            u.segment(uind1, V) -= tmp * (b - f);
+            u.row(uind1) -= tmp * (b - f);
 
           update_inds(indsInner, N);
           idx++;
@@ -162,10 +162,10 @@ void interfs(void (*F)(double *, double *, int),
   }
 }
 
-void fv_launcher(void (*F)(double *, double *, int),
-                 void (*B)(double *, double *, int),
-                 void (*S)(double *, double *), Vecr u, Matr qh, iVecr nX,
-                 double dt, Vecr dX, int FLUX, int N) {
+void finite_volume(void (*F)(double *, double *, int),
+                   void (*B)(double *, double *, int),
+                   void (*S)(double *, double *), Matr u, Matr qh, iVecr nX,
+                   double dt, Vecr dX, int FLUX, int N) {
 
   Vec NODES = scaled_nodes(N);
   Vec WGHTS = scaled_weights(N);

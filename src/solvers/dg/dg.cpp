@@ -144,12 +144,14 @@ void initial_condition(Matr Ww, Matr w, Vecr WGHTS, Matr ENDVALS, int ndim) {
     }
 }
 
-Mat predictor(void (*F)(double *, double *, int),
-              void (*B)(double *, double *, int), void (*S)(double *, double *),
-              Matr wh, double dt, Vecr dX, bool STIFF, int N, int V) {
+Mat dg_predictor(void (*F)(double *, double *, int),
+                 void (*B)(double *, double *, int),
+                 void (*S)(double *, double *), Matr wh, double dt, Vecr dX,
+                 bool STIFF, int N) {
 
   int ndim = dX.size();
   int Nd = pow(N, ndim);
+  int V = wh.cols();
 
   Mat qh(wh.rows() * N, V);
 

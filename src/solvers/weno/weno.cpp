@@ -111,7 +111,7 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
   return rec;
 }
 
-Mat weno_launcher(Matr ub, iVecr nX, int N, int V) {
+Mat weno_reconstruction(Matr ub, iVecr nX, int N, int V) {
 
   int FN2 = (int)floor((N - 1) / 2.);
   int CN2 = (int)ceil((N - 1) / 2.);

@@ -3,6 +3,6 @@
 
 #include "../../etc/types.h"
 
-Mat weno_launcher(Vecr ub, iVecr nX, int N, int V);
+Mat weno_reconstruction(Matr ub, iVecr nX, int N, int V);
 
 #endif // WENO_H

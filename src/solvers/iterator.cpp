@@ -7,31 +7,18 @@
 #include "fv/fv.h"
 #include "weno/weno.h"
 
-void stepper(void (*F)(double *, double *, int),
-             void (*B)(double *, double *, int), void (*S)(double *, double *),
-             Vecr u, Vecr ub, iVecr nX, double dt, Vecr dX, bool STIFF,
-             int FLUX, int N, int V) {
-
-  Mat wh = weno_launcher(ub, nX, N, V);
-
-  Mat qh = predictor(F, B, S, wh, dt, dX, STIFF, N, V);
-
-  fv_launcher(F, B, S, u, qh, nX, dt, dX, FLUX, N);
-}
-
 double timestep(void (*F)(double *, double *, int),
-                void (*B)(double *, double *, int), Vecr u, aVecr dX,
-                double CFL, double t, double tf, int count, int V) {
-
-  double MAX = 0.;
+                void (*B)(double *, double *, int), Matr u, aVecr dX,
+                double CFL, double t, double tf, int count) {
 
   int ndim = dX.size();
 
-  for (int ind = 0; ind < u.size(); ind += V) {
+  double MAX = 0.;
+  for (int ind = 0; ind < u.rows(); ind++) {
 
     double tmp = 0.;
     for (int d = 0; d < ndim; d++)
-      tmp += max_abs_eigs(F, B, u.segment(ind, V), d) / dX(d);
+      tmp += max_abs_eigs(F, B, u.row(ind), d) / dX(d);
 
     MAX = std::max(MAX, tmp);
   }
@@ -49,29 +36,29 @@ double timestep(void (*F)(double *, double *, int),
 
 std::vector<Vec> iterator(void (*F)(double *, double *, int),
                           void (*B)(double *, double *, int),
-                          void (*S)(double *, double *), Vecr u, double tf,
+                          void (*S)(double *, double *), Matr u, double tf,
                           iVecr nX, aVecr dX, double CFL, iVecr boundaryTypes,
                           bool STIFF, int FLUX, int N, int ndt) {
 
   int V = u.size() / nX.prod();
-  Vec uprev(u.size());
+  Mat uprev = u;
   std::vector<Vec> ret(ndt);
 
   double t = 0.;
   long count = 0;
   int pushCount = 0;
 
-  double dt = 0.;
-
   while (t < tf) {
 
-    uprev = u;
+    double dt = timestep(F, B, u, dX, CFL, t, tf, count);
 
-    dt = timestep(F, B, u, dX, CFL, t, tf, count, V);
+    Mat ub = boundaries(u, nX, boundaryTypes, N);
 
-    Vec ub = boundaries(u, nX, boundaryTypes, N);
+    Mat wh = weno_reconstruction(ub, nX, N, V);
 
-    stepper(F, B, S, u, ub, nX, dt, dX, STIFF, FLUX, N, V);
+    Mat qh = dg_predictor(F, B, S, wh, dt, dX, STIFF, N);
+
+    finite_volume(F, B, S, u, qh, nX, dt, dX, FLUX, N);
 
     t += dt;
     count += 1;
@@ -86,6 +73,8 @@ std::vector<Vec> iterator(void (*F)(double *, double *, int),
       ret[pushCount + 1] = u;
       return ret;
     }
+
+    uprev = u;
   }
 
   ret[ndt - 1] = u;

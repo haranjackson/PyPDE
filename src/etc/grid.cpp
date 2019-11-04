@@ -23,7 +23,7 @@ int renormalised_index(int ind, int N, int type, int bound) {
   return ret;
 }
 
-Vec boundaries(Vecr u, iVecr nX, iVecr boundaryTypes, int N) {
+Mat boundaries(Matr u, iVecr nX, iVecr boundaryTypes, int N) {
   // If periodic is true, applies periodic boundary conditions,
   // else applies transmissive boundary conditions
 
@@ -35,7 +35,7 @@ Vec boundaries(Vecr u, iVecr nX, iVecr boundaryTypes, int N) {
   nX_2N.array() += 2 * N;
   int ncell = nX_2N.prod();
 
-  Vec ub(ncell);
+  Mat ub(ncell, V);
 
   iVec inds = iVec::Zero(ndim);
   iVec tmpInds(ndim);
@@ -48,7 +48,7 @@ Vec boundaries(Vecr u, iVecr nX, iVecr boundaryTypes, int N) {
       tmpInds(d) = renormalised_index(inds(d), N, boundaryTypes(d), nX(d));
     }
 
-    ub.segment(idx * V, V) = u.segment(index(tmpInds, nX, 0), V);
+    ub.row(idx) = u.row(index(tmpInds, nX, 0));
   }
 
   return ub;

@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-Vec boundaries(Vecr u, iVecr nX, iVecr boundaryTypes, int N);
+Mat boundaries(Matr u, iVecr nX, iVecr boundaryTypes, int N);
 
 #endif // GRID_H
