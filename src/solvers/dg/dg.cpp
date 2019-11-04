@@ -1,3 +1,4 @@
+#include "../../etc/indexing.h"
 #include "../../etc/types.h"
 #include "../../scipy/newton_krylov.h"
 #include "../poly/basis.h"
@@ -18,104 +19,139 @@ void initial_guess(Matr q, Matr w) {
     }
 }
 
-Mat rhs(Matr q, Matr Ww, double dt, Vecr dX, int N, int V, Matr DERVALS,
-        Vecr WGHTS, Matr DG_DER) {
+Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
+        void (*S)(double *, double *), Matr q, Matr Ww, double dt, Vecr dX,
+        int N, int V, Matr DERVALS, Vecr WGHTS, Matr DG_DER) {
 
   int ndim = dX.size();
-  Mat ret(N * N * N, V);
-  Mat dq_dx(N * N * N, V);
-  Mat dq_dy(N * N * N, V);
+  int Nd = pow(N, ndim);
 
-  Mat f = Mat::Zero(N * N * N, V);
-  Mat g = Mat::Zero(N * N * N, V);
+  Mat ret(Nd * N, V);
 
-  Vec tmpx(V);
-  Vec tmpy(V);
+  Mat M = Mat::Zero(Nd, V);
+  Mat M1 = Mat::Zero(N * Nd, V);
 
-  for (int t = 0; t < N; t++) {
-    derivs(dq_dx.block(t * N * N, 0, N * N, V), q.block(t * N * N, 0, N * N, V),
-           0, DERVALS, ndim);
-    derivs(dq_dy.block(t * N * N, 0, N * N, V), q.block(t * N * N, 0, N * N, V),
-           1, DERVALS, ndim);
-  }
-  dq_dx /= dX(0);
-  dq_dy /= dX(1);
+  std::vector<Mat> dq(ndim);
+  std::vector<Mat> f(ndim);
+  std::vector<Mat> df(ndim);
 
-  int ind = 0;
-  for (int t = 0; t < N; t++)
-    for (int i = 0; i < N; i++)
-      for (int j = 0; j < N; j++) {
-        source(ret.row(ind), q.row(ind));
-        Bdot(tmpx, q.row(ind), dq_dx.row(ind), 0);
-        Bdot(tmpy, q.row(ind), dq_dy.row(ind), 1);
-        ret.row(ind) -= tmpx + tmpy;
-        ret.row(ind) *= WGHTS(t) * WGHTS(i) * WGHTS(j);
-        flux(f.row(ind), q.row(ind), 0);
-        flux(g.row(ind), q.row(ind), 1);
-        ind += 1;
-      }
-
-  Mat f2(N * N * N, V);
-  Mat g2(N * N * N, V);
-  for (int i = 0; i < N * N * N; i++) {
-    f2.row(i) = WGHTS(i % N) * f.row(i);
-  }
-  for (int i = 0; i < N * N; i++) {
-    g2.block(i * N, 0, N, V) = DG_DER * g.block(i * N, 0, N, V);
+  for (int d = 0; d < ndim; d++) {
+    f[d] = M1;
+    df[d] = M;
+    dq[d] = M;
   }
 
-  ind = 0;
-  for (int t = 0; t < N; t++)
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        int indi = t * N + i;
-        int indj = t * N + j;
-        ret.block(indi * N, 0, N, V) -=
-            WGHTS(t) * DG_DER(i, j) * f2.block(indj * N, 0, N, V) / dx;
-      }
-      ret.block(ind * N, 0, N, V) -=
-          WGHTS(t) * WGHTS(i) * g2.block(ind * N, 0, N, V) / dy;
-      ind += 1;
+  Mat b(V, V);
+
+  iVec indsInner = iVec::Zero(ndim);
+
+  for (int ind = 0; ind < N * Nd; ind++)
+    for (int d = 0; d < ndim; d++) {
+      F(f[d].row(ind).data(), q.row(ind).data(), d);
     }
 
-  ret *= dt;
-  ret += Ww;
-  return ret;
+  for (int t = 0; t < N; t++) {
+
+    for (int d = 0; d < ndim; d++) {
+
+      derivs(dq[d], q.block(t * Nd, 0, Nd, V), d, DERVALS, ndim);
+      dq[d] /= dX(d);
+
+      derivs(df[d], f[d].block(t * Nd, 0, Nd, V), d, DERVALS, ndim);
+      df[d] /= dX(d);
+    }
+
+    int idx = 0;
+    while (idx < Nd) {
+
+      int ind = t * Nd + idx;
+
+      if (S == NULL)
+        ret.row(ind).setZero();
+      else
+        S(ret.row(ind).data(), q.row(ind).data());
+
+      double c = WGHTS(t);
+      for (int d = 0; d < ndim; d++) {
+
+        B(b.data(), q.row(ind).data(), d);
+        ret.row(ind) -= b * dq[d].row(ind);
+
+        ret.row(ind) -= df[d].row(ind);
+
+        c *= WGHTS(indsInner(d));
+      }
+      ret.row(ind) *= c;
+
+      update_inds(indsInner, N);
+      idx++;
+    }
+  }
+
+  return dt * ret + Ww;
 }
 
-Vec obj(Vecr q, Matr Ww, double dt, Vecr dX, int N, int V, Matr DG_MAT,
-        Matr DERVALS, Matr DG_DER, Vecr WGHTS) {
+Vec obj(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
+        void (*S)(double *, double *), Vecr q, Matr Ww, double dt, Vecr dX,
+        int N, int V, int ndim, Matr DG_MAT, Matr DERVALS, Matr DG_DER,
+        Vecr WGHTS) {
 
-  MatMap qmat(q.data(), OuterStride(V));
-  Mat tmp = rhs(qmat, Ww, dt, dX, N, V, DERVALS, WGHTS, DG_DER);
+  int Nd = pow(N, ndim);
+  MatMap qmat(q.data(), N * Nd, V, OuterStride(V));
+  Mat tmp = rhs(F, B, S, qmat, Ww, dt, dX, N, V, DERVALS, WGHTS, DG_DER);
+
+  iVec indsInner = iVec::Zero(ndim);
 
   for (int t = 0; t < N; t++)
-    for (int k = 0; k < N; k++)
-      for (int i = 0; i < N; i++)
-        for (int j = 0; j < N; j++) {
-          int indt = (t * N + i) * N + j;
-          int indk = (k * N + i) * N + j;
-          tmp.row(indt) -=
-              (DG_MAT(t, k) * WGHTS(i) * WGHTS(j)) * qmat.row(indk);
-        }
-  VecMap ret(tmp.data(), N * N * N * V);
+    for (int k = 0; k < N; k++) {
+
+      int idx = 0;
+      int indt = t * Nd;
+      int indk = k * Nd;
+      while (idx < Nd) {
+
+        double c = DG_MAT(t, k);
+        for (int d = 0; d < ndim; d++)
+          c *= WGHTS(indsInner(d));
+
+        tmp.row(indt + idx) -= c * qmat.row(indk + idx);
+
+        update_inds(indsInner, N);
+        idx++;
+      }
+    }
+  VecMap ret(tmp.data(), N * Nd * V);
   return ret;
 }
 
-void initial_condition(Matr Ww, Matr w, Vecr WGHTS, Matr ENDVALS) {
+void initial_condition(Matr Ww, Matr w, Vecr WGHTS, Matr ENDVALS, int ndim) {
 
   int N = WGHTS.size();
+  int Nd = pow(N, ndim);
+
+  iVec indsInner = iVec::Zero(ndim);
+
   for (int t = 0; t < N; t++)
-    for (int i = 0; i < N; i++)
-      for (int j = 0; j < N; j++)
-        Ww.row(t * N * N + i * N + j) =
-            ENDVALS(0, t) * WGHTS(i) * WGHTS(j) * w.row(i * N + j);
+    for (int idx = 0; idx < Nd; idx++) {
+
+      double c = ENDVALS(0, t);
+      for (int d = 0; d < ndim; d++)
+        c *= WGHTS(indsInner(d));
+
+      Ww.row(t * Nd + idx) = c * w.row(idx);
+
+      update_inds(indsInner, N);
+    }
 }
 
-void predictor(Vecr qh, Vecr wh, double dt, Vecr dX, int ncell, bool STIFF,
-               int N, int V) {
+Mat predictor(void (*F)(double *, double *, int),
+              void (*B)(double *, double *, int), void (*S)(double *, double *),
+              Matr wh, double dt, Vecr dX, bool STIFF, int N, int V) {
 
   int ndim = dX.size();
+  int Nd = pow(N, ndim);
+
+  Mat qh(wh.rows() * N, V);
 
   std::vector<poly> basis = basis_polys(N);
   Vec NODES = scaled_nodes(N);
@@ -135,41 +171,35 @@ void predictor(Vecr qh, Vecr wh, double dt, Vecr dX, int ncell, bool STIFF,
 
   Dec DG_U(kron(tmp));
 
-  Mat Ww(N * N * N, V);
-  Mat q0(N * N * N, V);
+  Mat Ww(N * Nd, V);
+  Mat q0(N * Nd, V);
 
-  double dx = dX(0);
-  double dy = dX(1);
+  for (int ind = 0; ind < wh.size(); ind += Nd * V) {
 
-  for (int ind = 0; ind < ncell; ind++) {
+    MatMap wi(wh.data() + ind, Nd, V, OuterStride(V));
+    MatMap qi(qh.data() + ind * N, N * Nd, V, OuterStride(V));
 
-    MatMap wi(wh.data() + (ind * N * N * V), N * N, V, OuterStride(V));
-    MatMap qi(qh.data() + (ind * N * N * N * V), N * N * N, V, OuterStride(V));
-
-    initial_condition(Ww, wi, WGHTS, ENDVALS);
+    initial_condition(Ww, wi, WGHTS, ENDVALS, ndim);
 
     using std::placeholders::_1;
-    VecFunc obj_bound = std::bind(obj, _1, Ww, dt, dx, dy, N, V, DG_MAT,
-                                  DERVALS, DG_DER, WGHTS);
+    VecFunc obj_bound = std::bind(obj, F, B, S, _1, Ww, dt, dX, N, V, ndim,
+                                  DG_MAT, DERVALS, DG_DER, WGHTS);
 
     initial_guess(q0, wi);
 
     if (STIFF) {
-      VecMap q0v(q0.data(), N * N * N * V);
-      qh.segment(ind * N * N * N * V, N * N * N * V) =
-          nonlin_solve(obj_bound, q0v, DG_TOL);
+      VecMap q0v(q0.data(), N * Nd * V);
+      qh.block(ind * N, 0, N * Nd, V) = nonlin_solve(obj_bound, q0v, DG_TOL);
     } else {
-
-      Mat q1(N * N * N, V);
-      aMat absDiff(N * N * N, V);
 
       for (int count = 0; count < DG_IT; count++) {
 
-        q1 = DG_U.solve(rhs(q0, Ww, dt, dx, dy, N, V, DERVALS, WGHTS, DG_DER));
+        Mat q1 = DG_U.solve(
+            rhs(F, B, S, q0, Ww, dt, dX, N, V, DERVALS, WGHTS, DG_DER));
 
-        absDiff = (q1 - q0).array().abs();
+        aMat absDiff = (q1 - q0).array().abs();
 
-        if ((absDiff > DG_TOL * (1 + q0.array().abs())).any()) {
+        if ((absDiff > DG_TOL * (1. + q0.array().abs())).any()) {
           q0 = q1;
           continue;
         } else {
@@ -179,4 +209,5 @@ void predictor(Vecr qh, Vecr wh, double dt, Vecr dX, int ncell, bool STIFF,
       }
     }
   }
+  return qh;
 }

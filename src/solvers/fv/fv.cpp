@@ -5,7 +5,7 @@
 #include "fluxes.h"
 
 void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
-             Vecr u, Vecr rec, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
+             Vecr u, Matr qh, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
              Matr DERVALS) {
 
   int ndim = nX.size();
@@ -37,10 +37,10 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
 
       int tCell = (recCell * N + t) * Nd * V;
 
-      MatMap qh(rec.data() + tCell, Nd, V, OuterStride(V));
+      MatMap qhi(qh.data() + tCell, Nd, V, OuterStride(V));
 
       for (int d = 0; d < ndim; d++)
-        derivs(dq[d], qh, d, DERVALS, ndim);
+        derivs(dq[d], qhi, d, DERVALS, ndim);
 
       int idx = 0;
       while (idx < Nd) {
@@ -48,11 +48,11 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
         if (S == NULL)
           s.setZero();
         else
-          S(s.data(), qh.row(idx).data());
+          S(s.data(), qhi.row(idx).data());
 
         if (B != NULL)
           for (int d = 0; d < ndim; d++) {
-            B(b.data(), qh.row(idx).data(), d);
+            B(b.data(), qhi.row(idx).data(), d);
             s -= b * dq[d].row(idx) / dX(d);
           }
 
@@ -74,7 +74,7 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
 }
 
 void interfs(void (*F)(double *, double *, int),
-             void (*B)(double *, double *, int), Vecr u, Vecr rec, iVecr nX,
+             void (*B)(double *, double *, int), Vecr u, Matr qh, iVecr nX,
              double dt, Vecr dX, int FLUX, Vecr NODES, Vecr WGHTS,
              Matr ENDVALS) {
 
@@ -107,7 +107,7 @@ void interfs(void (*F)(double *, double *, int),
     for (int t = 0; t < WGHTS.size(); t++) {
 
       int ind0 = (index(indsOuter, nX2, 0) * N + t) * Nd * V;
-      MatMap qh0(rec.data() + ind0, Nd, V, OuterStride(V));
+      MatMap qh0(qh.data() + ind0, Nd, V, OuterStride(V));
 
       for (int d = 0; d < ndim; d++) {
 
@@ -119,7 +119,7 @@ void interfs(void (*F)(double *, double *, int),
         int ind1 = (index(indsOuter, nX2, 0) * N + t) * Nd * V;
         indsOuter(d) -= 1;
 
-        MatMap qh1(rec.data() + ind1, Nd, V, OuterStride(V));
+        MatMap qh1(qh.data() + ind1, Nd, V, OuterStride(V));
 
         endpts(q0, qh0, d, 1, ENDVALS, ndim);
         endpts(q1, qh1, d, 0, ENDVALS, ndim);
@@ -164,7 +164,7 @@ void interfs(void (*F)(double *, double *, int),
 
 void fv_launcher(void (*F)(double *, double *, int),
                  void (*B)(double *, double *, int),
-                 void (*S)(double *, double *), Vecr u, Vecr rec, iVecr nX,
+                 void (*S)(double *, double *), Vecr u, Matr qh, iVecr nX,
                  double dt, Vecr dX, int FLUX, int N) {
 
   Vec NODES = scaled_nodes(N);
@@ -175,8 +175,8 @@ void fv_launcher(void (*F)(double *, double *, int),
   Mat DERVALS = derivative_values(basis, NODES);
 
   if (B != NULL || S != NULL)
-    centers(B, S, u, rec, nX, dt, dX, WGHTS, DERVALS);
+    centers(B, S, u, qh, nX, dt, dX, WGHTS, DERVALS);
 
   if (F != NULL || B != NULL)
-    interfs(F, B, u, rec, nX, dt, dX, FLUX, NODES, WGHTS, ENDVALS);
+    interfs(F, B, u, qh, nX, dt, dX, FLUX, NODES, WGHTS, ENDVALS);
 }

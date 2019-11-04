@@ -1,37 +1,38 @@
 #include <iostream>
 
 #include "../etc/grid.h"
+#include "../etc/system.h"
 #include "../etc/types.h"
 #include "dg/dg.h"
 #include "fv/fv.h"
 #include "weno/weno.h"
 
-void stepper(Vecr u, Vecr ub, iVecr nX, double dt, Vecr dX, bool STIFF,
+void stepper(void (*F)(double *, double *, int),
+             void (*B)(double *, double *, int), void (*S)(double *, double *),
+             Vecr u, Vecr ub, iVecr nX, double dt, Vecr dX, bool STIFF,
              int FLUX, int N, int V) {
 
-  int ndim = nX.size();
-  Vec wh(extended_dimensions(nX, 1) * int(pow(N, ndim)) * V);
-  Vec qh(extended_dimensions(nX, 1) * int(pow(N, ndim + 1)) * V);
+  Mat wh = weno_launcher(ub, nX, N, V);
 
-  weno_launcher(wh, ub, nX);
+  Mat qh = predictor(F, B, S, wh, dt, dX, STIFF, N, V);
 
-  predictor(qh, wh, dt, dX, STIFF);
-
-  fv_launcher(u, qh, nX, dt, dX, FLUX);
+  fv_launcher(F, B, S, u, qh, nX, dt, dX, FLUX, N);
 }
 
-double timestep(Vecr u, aVecr dX, double CFL, double t, double tf, int count,
-                int V) {
+double timestep(void (*F)(double *, double *, int),
+                void (*B)(double *, double *, int), Vecr u, aVecr dX,
+                double CFL, double t, double tf, int count, int V) {
 
   double MAX = 0.;
 
   int ndim = dX.size();
-  int ncell = u.size() / V;
 
-  for (int ind = 0; ind < ncell; ind++) {
+  for (int ind = 0; ind < u.size(); ind += V) {
+
     double tmp = 0.;
     for (int d = 0; d < ndim; d++)
-      tmp += max_abs_eigs(u.segment(ind * V, V), d) / dX(d);
+      tmp += max_abs_eigs(F, B, u.segment(ind, V), d) / dX(d);
+
     MAX = std::max(MAX, tmp);
   }
 
@@ -46,17 +47,15 @@ double timestep(Vecr u, aVecr dX, double CFL, double t, double tf, int count,
     return dt;
 }
 
-std::vector<Vec> iterator(Vecr u, double tf, iVecr nX, aVecr dX, double CFL,
-                          iVecr boundaryTypes, bool STIFF, int FLUX, int N,
-                          int ndt) {
+std::vector<Vec> iterator(void (*F)(double *, double *, int),
+                          void (*B)(double *, double *, int),
+                          void (*S)(double *, double *), Vecr u, double tf,
+                          iVecr nX, aVecr dX, double CFL, iVecr boundaryTypes,
+                          bool STIFF, int FLUX, int N, int ndt) {
 
   int V = u.size() / nX.prod();
   Vec uprev(u.size());
   std::vector<Vec> ret(ndt);
-
-  Vec ub(extended_dimensions(nX, N) * V);
-
-  int ncell = u.size() / V;
 
   double t = 0.;
   long count = 0;
@@ -68,11 +67,11 @@ std::vector<Vec> iterator(Vecr u, double tf, iVecr nX, aVecr dX, double CFL,
 
     uprev = u;
 
-    dt = timestep(u, dX, CFL, t, tf, count, V);
+    dt = timestep(F, B, u, dX, CFL, t, tf, count, V);
 
-    boundaries(u, ub, nX, boundaryTypes, N, V);
+    Vec ub = boundaries(u, nX, boundaryTypes, N);
 
-    stepper(u, ub, nX, dt, dX, STIFF, FLUX);
+    stepper(F, B, S, u, ub, nX, dt, dX, STIFF, FLUX, N, V);
 
     t += dt;
     count += 1;

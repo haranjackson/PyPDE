@@ -19,56 +19,35 @@ void weight(Vecr ret, Matr w, double LAM, Matr SIG, int V) {
   }
 }
 
-void coeffs(Matr ret, Matr data, int nx, int ind, int N, int V, int FN2,
-            int CN2, Dec ML, Dec MR, Dec MCL, Dec MCR, Matr SIG) {
+void coeffs_inner(Vecr o, Matr w, int V, Dec M, Matr dataBlock, Matr SIG,
+                  Matr num, Vecr den, double LAM) {
+
+  w = M.solve(dataBlock);
+  weight(o, w, LAM, SIG, V);
+  num.array() += w.array().rowwise() * o.transpose().array();
+  den += o;
+}
+
+void coeffs(Matr ret, Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR,
+            Dec MCL, Dec MCR, Matr SIG) {
   // Calculate coefficients of basis polynomials and weights
 
-  Vec oL(V);
-  Vec oR(V);
-  Vec oCL(V);
-  Vec oCR(V);
-
-  Mat wL(N, V);
-  Mat wR(N, V);
-  Mat wCL(N, V);
-  Mat wCR(N, V);
-
-  wL = ML.solve(data.block(0, 0, N, V));
-  wR = MR.solve(data.block(N - 1, 0, N, V));
-
-  weight(oL, wL, LAMS, SIG, V);
-  weight(oR, wR, LAMS, SIG, V);
-
-  if (N > 2) {
-    wCL = MCL.solve(data.block(FN2, 0, N, V));
-    weight(oCL, wCL, LAMC, SIG, V);
-
-    if (N % 2 == 0) // Two central stencils (N>3)
-    {
-      wCR = MCR.solve(data.block(CN2, 0, N, V));
-      weight(oCR, wCR, LAMC, SIG, V);
-    }
-  }
+  Vec o(V);
+  Mat w(N, V);
 
   Mat num = Mat::Zero(N, V);
   Vec den = Vec::Zero(V);
 
-  num.array() += wL.array().rowwise() * oL.transpose().array();
-  den += oL;
-
-  num.array() += wR.array().rowwise() * oR.transpose().array();
-  den += oR;
+  coeffs_inner(o, w, V, ML, data.block(0, 0, N, V), SIG, num, den, LAMS);
+  coeffs_inner(o, w, V, MR, data.block(N - 1, 0, N, V), SIG, num, den, LAMS);
 
   if (N > 2) {
+    coeffs_inner(o, w, V, MCL, data.block(FN2, 0, N, V), SIG, num, den, LAMC);
 
-    num.array() += wCL.array().rowwise() * oCL.transpose().array();
-    den += oCL;
-
-    if (N % 2 == 0) {
-      num.array() += wCR.array().rowwise() * oCR.transpose().array();
-      den += oCR;
-    }
+    if (N % 2 == 0) // Two central stencils (N>3)
+      coeffs_inner(o, w, V, MCR, data.block(CN2, 0, N, V), SIG, num, den, LAMC);
   }
+
   ret.array() = num.array().rowwise() / den.transpose().array();
 }
 
@@ -80,57 +59,62 @@ void weno1(Matr wh, Matr ub, int nx, int N, int V, int FN2, int CN2, Dec ML,
 
   for (int i = 0; i < nx; i++)
 
-    coeffs(wh.block(i * N, 0, N, V), ub.block(i, 0, 2 * N - 1, V), nx, i, N, V,
-           FN2, CN2, ML, MR, MCL, MCR, SIG);
+    coeffs(wh.block(i * N, 0, N, V), ub.block(i, 0, 2 * N - 1, V), N, V, FN2,
+           CN2, ML, MR, MCL, MCR, SIG);
 }
 
-void weno2(Matr wh, Matr ub, int nx, int ny, int N, int V, int FN2, int CN2,
-           Dec ML, Dec MR, Dec MCL, Dec MCR, Matr SIG) {
+Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
+               Dec MR, Dec MCL, Dec MCR, Matr SIG) {
   // Returns the WENO reconstruction of u using polynomials in y
   // Size of ub: (nx + 2(N-1)) * (ny + 2(N-1)) * V
   // Size of wh: nx * ny * N * N * V
 
-  Vec ux(nx * (ny + 2 * (N - 1)) * N * V);
+  iVec shape = nX;
+  shape.array() += 2 * (N - 1);
 
-  Mat tmp0(nx * N, V);
-  MatMap tmp0Map(tmp0.data(), nx, N * V, OuterStride(N * V));
+  Mat rec = ub;
+  int ndim = nX.size();
 
-  for (int j = 0; j < ny + 2 * (N - 1); j++) {
-    MatMap ubMap(ub.data() + j * V, nx + 2 * (N - 1), V,
-                 OuterStride((ny + 2 * (N - 1)) * V));
-    MatMap uxMap(ux.data() + j * N * V, nx, N * V,
-                 OuterStride((ny + 2 * (N - 1)) * N * V));
+  for (int d = 0; d < ndim; d++) {
 
-    weno1(tmp0, ubMap, nx, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
-    uxMap = tmp0Map;
+    iVec shape0 = shape.segment(0, d);
+    iVec shape1 = shape.segment(d + 1, ndim - (d + 1));
+
+    int n1 = shape0.array().prod();
+    int n2 = shape(d) - 2 * (N - 1);
+    int n3 = shape1.array().prod();
+    int n4 = pow(N, d);
+
+    Mat tmp = Mat::Zero(n1 * n2 * n3 * n4 * N, V);
+
+    int stride = n3 * n4 * V;
+
+    for (int i1 = 0; i1 < n1; i1++)
+      for (int i3 = 0; i3 < n3; i3++)
+        for (int i4 = 0; i4 < n4; i4++) {
+
+          int indu = (i1 * shape(d) * n3 + i3) * n4 + i4;
+          int indw = (i1 * n2 * n3 + i3) * n4 + i4;
+
+          Mat ub0 = MatMap(rec.data() + indu, shape(d), V, OuterStride(stride));
+
+          Mat wh0 =
+              MatMap(tmp.data() + indw, n2, N * V, OuterStride(N * stride));
+
+          weno1(wh0, ub0, n2, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
+        }
+
+    rec = tmp;
+    shape(d) -= 2 * (N - 1);
   }
 
-  Mat tmp1(ny * N, V);
-  MatMap tmp1Map(tmp1.data(), ny, N * V, OuterStride(N * V));
-
-  for (int i = 0; i < nx; i++)
-    for (int ii = 0; ii < N; ii++) {
-      MatMap uxMap(ux.data() + (i * (ny + 2 * (N - 1)) * N + ii) * V,
-                   (ny + 2 * (N - 1)), V, OuterStride(N * V));
-      MatMap whMap(wh.data() + (i * ny * N + ii) * N * V, ny, N * V,
-                   OuterStride(N * N * V));
-
-      weno1(tmp1, uxMap, ny, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
-      whMap = tmp1Map;
-    }
-  // TODO: make this n-dimensional by turning these two sets of for loops into
-  // n sets of for loops, contained within a large loop over the dimensions
+  return rec;
 }
 
-void weno_launcher(Vecr wh, Vecr ub, iVecr nX, int N, int V) {
-  // NOTE: boundary conditions extend u by two cells in each dimension
+Mat weno_launcher(Matr ub, iVecr nX, int N, int V) {
 
-  int ndim = nX.size();
   int FN2 = (int)floor((N - 1) / 2.);
   int CN2 = (int)ceil((N - 1) / 2.);
-
-  int nwh = wh.size() / V;
-  int nub = ub.size() / V;
 
   std::vector<poly> basis = basis_polys(N);
 
@@ -141,20 +125,5 @@ void weno_launcher(Vecr wh, Vecr ub, iVecr nX, int N, int V) {
   Dec MCR(coeffMats[3]);
   Mat SIG = oscillation_indicator(basis);
 
-  Vec ub_ = ub;
-
-  MatMap whMap(wh.data(), nwh, V, OuterStride(V));
-  MatMap ubMap(ub_.data(), nub, V, OuterStride(V));
-
-  switch (ndim) {
-
-  case 1:
-    weno1(whMap, ubMap, nX(0) + 2, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
-    break;
-
-  case 2:
-    weno2(whMap, ubMap, nX(0) + 2, nX(1) + 2, N, V, FN2, CN2, ML, MR, MCL, MCR,
-          SIG);
-    break;
-  }
+  return weno_inner(ub, nX, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
 }

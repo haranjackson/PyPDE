@@ -2,6 +2,7 @@
 #define NUMERICAL_DIFF_H
 
 #include "eigen3/Core"
+#include "types.h"
 #include <cassert>
 
 enum NumericalDiffMode { Forward, Central };
