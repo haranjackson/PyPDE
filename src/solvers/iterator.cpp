@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "../etc/grid.h"
 #include "../etc/system.h"
 #include "../etc/types.h"
@@ -34,15 +32,14 @@ double timestep(void (*F)(double *, double *, int),
     return dt;
 }
 
-std::vector<Vec> iterator(void (*F)(double *, double *, int),
-                          void (*B)(double *, double *, int),
-                          void (*S)(double *, double *), Matr u, double tf,
-                          iVecr nX, aVecr dX, double CFL, iVecr boundaryTypes,
-                          bool STIFF, int FLUX, int N, int ndt) {
+void iterator(void (*F)(double *, double *, int),
+              void (*B)(double *, double *, int), void (*S)(double *, double *),
+              Matr u, double tf, iVecr nX, aVecr dX, double CFL,
+              iVecr boundaryTypes, bool STIFF, int FLUX, int N, int ndt,
+              Matr ret) {
 
   int V = u.size() / nX.prod();
   Mat uprev = u;
-  std::vector<Vec> ret(ndt);
 
   double t = 0.;
   long count = 0;
@@ -64,19 +61,17 @@ std::vector<Vec> iterator(void (*F)(double *, double *, int),
     count += 1;
 
     if (t >= double(pushCount + 1) / double(ndt) * tf) {
-      ret[pushCount] = u;
+      ret.row(pushCount) = VecMap(u.data(), u.size());
       pushCount += 1;
     }
 
     if (u.array().isNaN().any()) {
-      ret[pushCount] = uprev;
-      ret[pushCount + 1] = u;
-      return ret;
+      ret.row(pushCount) = VecMap(uprev.data(), uprev.size());
+      ret.row(pushCount + 1) = VecMap(u.data(), u.size());
     }
 
     uprev = u;
   }
 
-  ret[ndt - 1] = u;
-  return ret;
+  ret.row(ndt - 1) = VecMap(u.data(), u.size());
 }

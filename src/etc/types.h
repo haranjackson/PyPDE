@@ -37,8 +37,10 @@ typedef Eigen::Ref<aVec> aVecr;
 typedef Eigen::Ref<cVec> cVecr;
 
 typedef Eigen::OuterStride<Eigen::Dynamic> OuterStride;
-typedef Eigen::Map<Mat, 0, Eigen::OuterStride<Eigen::Dynamic>> MatMap;
-typedef Eigen::Map<Vec, 0, Eigen::InnerStride<1>> VecMap;
+typedef Eigen::Map<Mat, 0, Eigen::OuterStride<Eigen::Dynamic> > MatMap;
+typedef Eigen::Map<Vec, 0, Eigen::InnerStride<1> > VecMap;
+typedef Eigen::Map<aVec, 0, Eigen::InnerStride<1> > aVecMap;
+typedef Eigen::Map<iVec, 0, Eigen::InnerStride<1> > iVecMap;
 
 typedef Eigen::HouseholderQR<Mat> DecQR;
 typedef Eigen::ColPivHouseholderQR<Mat> Dec;

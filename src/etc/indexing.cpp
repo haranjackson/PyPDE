@@ -39,6 +39,8 @@ int index(iVecr inds, iVecr bounds, int offset) {
     ret *= bounds(i);
     ret += inds(i) + offset;
   }
+
+  return ret;
 }
 
 int index(iVecr inds, int N) {
@@ -50,4 +52,6 @@ int index(iVecr inds, int N) {
     ret *= N;
     ret += inds(i);
   }
+
+  return ret;
 }

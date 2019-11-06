@@ -12,6 +12,9 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 # -ffast-math causes nans in some tests
 
 add_library(ader SHARED 
+
+            src/main.cpp
+            
             src/etc/grid.cpp
             src/etc/indexing.cpp
             src/etc/system.cpp
