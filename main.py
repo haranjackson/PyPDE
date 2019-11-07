@@ -1,8 +1,8 @@
-import ctypes
+from ctypes import CDLL, POINTER, c_bool, c_double, c_int, c_void_p
 
 from numba import carray, cfunc, jit
 from numba.types import CPointer, double, intc, void
-from numpy import array, concatenate, inner, ones, zeros
+from numpy import array, concatenate, dtype, inner, ones, zeros
 
 from src.tests import F_reactive_euler, S_reactive_euler
 
@@ -11,6 +11,14 @@ B_sig = void(CPointer(double), CPointer(double), intc)
 S_sig = void(CPointer(double), CPointer(double))
 
 FLUXES = {'rusanov': 0, 'roe': 1, 'osher': 2}
+
+
+def c_ptr(arr):
+
+    if arr.dtype == dtype('float64'):
+        return arr.ctypes.data_as(POINTER(c_double))
+    elif arr.dtype == dtype('int64'):
+        return arr.ctypes.data_as(POINTER(c_int))
 
 
 def main(u,
@@ -35,6 +43,7 @@ def main(u,
         boundaryTypes = zeros(ndim)
     elif boundaryTypes == 'periodic':
         boundaryTypes = ones(ndim)
+    boundaryTypes = array(boundaryTypes, dtype=int)
 
     if F is None:
         F = lambda Q, d: zeros(V)
@@ -74,14 +83,25 @@ def main(u,
         for i in range(V):
             ret[i] = SQ[i]
 
-    libader = ctypes.CDLL('build/libader.dylib')
+    libader = CDLL('build/libader.dylib')
     solver = libader.ader_solver
+
+    solver.argtypes = [
+        c_void_p, c_void_p, c_void_p,
+        POINTER(c_double), c_double,
+        POINTER(c_int), c_int,
+        POINTER(c_double), c_double,
+        POINTER(c_int), c_bool, c_int, c_int, c_int, c_int,
+        POINTER(c_double)
+    ]
+
     solver.restype = None
+
     ret = zeros(ndt * u.size)
 
-    solver(_F.ctypes, _B.ctypes, _S.ctypes, u.ctypes.data, tf, nX.ctypes.data,
-           ndim, dX.ctypes.data, CFL, boundaryTypes.ctypes.data, STIFF,
-           FLUXES[flux], N, V, ndt, ret.ctypes.data)
+    solver(_F.ctypes, _B.ctypes, _S.ctypes, c_ptr(u), tf, c_ptr(nX), ndim,
+           c_ptr(dX), CFL, c_ptr(boundaryTypes), STIFF, FLUXES[flux], N, V,
+           ndt, c_ptr(ret))
 
 
 def energy(ρ, p, v, λ, γ, Qc):

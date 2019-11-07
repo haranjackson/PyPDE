@@ -11,32 +11,38 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 # -march=native seems slower sometimes
 # -ffast-math causes nans in some tests
 
-add_library(ader SHARED 
+set(RUN_TEST 1)
 
-            src/main.cpp
-            
-            src/etc/grid.cpp
-            src/etc/indexing.cpp
-            src/etc/system.cpp
+set (SOURCES 
+    src/ader.cpp
 
-            src/scipy/legendre.cpp
-            src/scipy/lgmres.cpp
-            src/scipy/newton_krylov.cpp
-            src/scipy/poly.cpp
+    src/etc/grid.cpp
+    src/etc/indexing.cpp
+    src/etc/system.cpp
 
-            src/solvers/iterator.cpp
+    src/scipy/legendre.cpp
+    src/scipy/lgmres.cpp
+    src/scipy/newton_krylov.cpp
+    src/scipy/poly.cpp
 
-            src/solvers/fv/fluxes.cpp
-            src/solvers/fv/fv.cpp
+    src/solvers/iterator.cpp
 
-            src/solvers/dg/dg.cpp
-            src/solvers/dg/dg_matrices.cpp
+    src/solvers/fv/fluxes.cpp
+    src/solvers/fv/fv.cpp
 
-            src/solvers/poly/basis.cpp
-            src/solvers/poly/evaluations.cpp
+    src/solvers/dg/dg.cpp
+    src/solvers/dg/dg_matrices.cpp
 
-            src/solvers/weno/weno.cpp
-            src/solvers/weno/weno_matrices.cpp
-            )
+    src/solvers/poly/basis.cpp
+    src/solvers/poly/evaluations.cpp
 
-set_target_properties(ader PROPERTIES VERSION ${PROJECT_VERSION})
+    src/solvers/weno/weno.cpp
+    src/solvers/weno/weno_matrices.cpp)
+
+if (RUN_TEST)
+    SET(SOURCES ${SOURCES} "src/test.cpp")
+    add_executable(ader_test ${SOURCES})
+else()
+    add_library(ader SHARED ${SOURCES})
+    set_target_properties(ader PROPERTIES VERSION ${PROJECT_VERSION})
+endif()
