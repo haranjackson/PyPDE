@@ -5,7 +5,6 @@ project(ADER_CPP VERSION 1.0.0 DESCRIPTION "A shared library for solving partial
 include_directories(include)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG")
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 # -march=native seems slower sometimes
@@ -40,9 +39,11 @@ set (SOURCES
     src/solvers/weno/weno_matrices.cpp)
 
 if (RUN_TEST)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
     SET(SOURCES ${SOURCES} "src/test.cpp")
     add_executable(ader_test ${SOURCES})
 else()
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
     add_library(ader SHARED ${SOURCES})
     set_target_properties(ader PROPERTIES VERSION ${PROJECT_VERSION})
 endif()

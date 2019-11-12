@@ -1,6 +1,7 @@
 #include "../../etc/types.h"
 #include "../poly/basis.h"
 #include "weno_matrices.h"
+#include <iostream>
 
 const double LAMS = 1.;   // WENO side stencil weighting
 const double LAMC = 1e5;  // WENO central stencil weighting
@@ -51,16 +52,20 @@ void coeffs(Matr ret, Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR,
   ret.array() = num.array().rowwise() / den.transpose().array();
 }
 
-void weno1(Matr wh, Matr ub, int nx, int N, int V, int FN2, int CN2, Dec ML,
-           Dec MR, Dec MCL, Dec MCR, Matr SIG) {
+Mat weno1(Matr ub, int nx, int N, int V, int FN2, int CN2, Dec ML, Dec MR,
+          Dec MCL, Dec MCR, Matr SIG) {
   // Returns the WENO reconstruction of u using polynomials in x
   // Shape of ub: (nx + 2(N-1), V)
   // Shapw of wh: (nx * N, V)
+
+  Mat wh(nx * N, V);
 
   for (int i = 0; i < nx; i++)
 
     coeffs(wh.block(i * N, 0, N, V), ub.block(i, 0, 2 * N - 1, V), N, V, FN2,
            CN2, ML, MR, MCL, MCR, SIG);
+
+  return wh;
 }
 
 Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
@@ -77,12 +82,16 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
 
   for (int d = 0; d < ndim; d++) {
 
-    iVec shape0 = shape.segment(0, d);
-    iVec shape1 = shape.segment(d + 1, ndim - (d + 1));
+    int n1 = 1;
+    for (int i = 0; i < d; i++)
+      n1 *= shape(i);
 
-    int n1 = shape0.array().prod();
     int n2 = shape(d) - 2 * (N - 1);
-    int n3 = shape1.array().prod();
+
+    int n3 = 1;
+    for (int i = d + 1; i < ndim; i++)
+      n3 *= shape(i);
+
     int n4 = pow(N, d);
 
     Mat tmp = Mat::Zero(n1 * n2 * n3 * n4 * N, V);
@@ -96,12 +105,14 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
           int indu = (i1 * shape(d) * n3 + i3) * n4 + i4;
           int indw = (i1 * n2 * n3 + i3) * n4 + i4;
 
-          Mat ub0 = MatMap(rec.data() + indu, shape(d), V, OuterStride(stride));
+          MatMap ub0(rec.data() + indu, shape(d), V, OuterStride(stride));
 
           Mat wh0 =
               MatMap(tmp.data() + indw, n2, N * V, OuterStride(N * stride));
 
-          weno1(wh0, ub0, n2, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
+          Mat wh = weno1(ub0, n2, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
+
+          wh0 = MatMap(wh.data(), n2, N * V, OuterStride(N * V));
         }
 
     rec = tmp;

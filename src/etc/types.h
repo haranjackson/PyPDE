@@ -36,6 +36,10 @@ typedef Eigen::Ref<iVec> iVecr;
 typedef Eigen::Ref<aVec> aVecr;
 typedef Eigen::Ref<cVec> cVecr;
 
+typedef const Eigen::Ref<const Mat> Matr_c;
+typedef const Eigen::Ref<const Vec> Vecr_c;
+typedef const Eigen::Ref<const iVec> iVecr_c;
+
 typedef Eigen::OuterStride<Eigen::Dynamic> OuterStride;
 typedef Eigen::Map<Mat, 0, Eigen::OuterStride<Eigen::Dynamic> > MatMap;
 typedef Eigen::Map<Vec, 0, Eigen::InnerStride<1> > VecMap;

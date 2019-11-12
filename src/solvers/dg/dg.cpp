@@ -4,6 +4,7 @@
 #include "../poly/basis.h"
 #include "../poly/evaluations.h"
 #include "dg_matrices.h"
+#include <iostream>
 
 const int DG_IT = 50;       // No. of iterations of non-Newton solver attempted
 const double DG_TOL = 6e-6; // Convergence tolerance
@@ -45,10 +46,12 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
 
   iVec indsInner = iVec::Zero(ndim);
 
-  for (int ind = 0; ind < N * Nd; ind++)
-    for (int d = 0; d < ndim; d++) {
-      F(f[d].row(ind).data(), q.row(ind).data(), d);
-    }
+  if (F != NULL) {
+    for (int ind = 0; ind < N * Nd; ind++)
+      for (int d = 0; d < ndim; d++) {
+        F(f[d].row(ind).data(), q.row(ind).data(), d);
+      }
+  }
 
   for (int t = 0; t < N; t++) {
 
@@ -57,8 +60,10 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
       derivs(dq[d], q.block(t * Nd, 0, Nd, V), d, DERVALS, ndim);
       dq[d] /= dX(d);
 
-      derivs(df[d], f[d].block(t * Nd, 0, Nd, V), d, DERVALS, ndim);
-      df[d] /= dX(d);
+      if (F != NULL) {
+        derivs(df[d], f[d].block(t * Nd, 0, Nd, V), d, DERVALS, ndim);
+        df[d] /= dX(d);
+      }
     }
 
     int idx = 0;
@@ -74,10 +79,13 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
       double c = WGHTS(t);
       for (int d = 0; d < ndim; d++) {
 
-        B(b.data(), q.row(ind).data(), d);
-        ret.row(ind) -= b * dq[d].row(ind);
+        if (B != NULL) {
+          B(b.data(), q.row(ind).data(), d);
+          ret.row(ind) -= b * dq[d].row(ind);
+        }
 
-        ret.row(ind) -= df[d].row(ind);
+        if (F != NULL)
+          ret.row(ind) -= df[d].row(ind);
 
         c *= WGHTS(indsInner(d));
       }
@@ -88,7 +96,9 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
     }
   }
 
-  return dt * ret + Ww;
+  ret *= dt;
+  ret += Ww;
+  return ret;
 }
 
 Vec obj(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
@@ -121,6 +131,7 @@ Vec obj(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
       }
     }
   VecMap ret(tmp.data(), N * Nd * V);
+
   return ret;
 }
 
@@ -190,8 +201,17 @@ Mat dg_predictor(void (*F)(double *, double *, int),
     initial_guess(q0, wi);
 
     if (STIFF) {
+
       VecMap q0v(q0.data(), N * Nd * V);
-      qh.block(ind * N, 0, N * Nd, V) = nonlin_solve(obj_bound, q0v, DG_TOL);
+
+      Vec res = nonlin_solve(obj_bound, q0v, DG_TOL);
+
+      std::cout << "qh_rows " << qh.rows() << " qh_cols " << qh.cols()
+                << " ind*N " << ind * N << "\n";
+
+      qh.block(ind * N, 0, N * Nd, V) =
+          MatMap(res.data(), N * Nd, V, OuterStride(V));
+
     } else {
 
       for (int count = 0; count < DG_IT; count++) {

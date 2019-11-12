@@ -14,7 +14,7 @@ int zero_index(iVecr inds, int N, int d) {
   ret *= pow(N, ndim - d);
   for (int i = d + 1; i < ndim; i++) {
     ret *= N;
-    ret += inds(i);
+    ret += inds(i - 1);
   }
 
   return ret;
