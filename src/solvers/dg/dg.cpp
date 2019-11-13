@@ -85,11 +85,11 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
 
         if (B != NULL) {
           B(b.data(), q.row(ind).data(), d);
-          ret.row(ind) -= b * dq[d].row(ind);
+          ret.row(ind) -= b * dq[d].row(idx);
         }
 
         if (F != NULL)
-          ret.row(ind) -= df[d].row(ind);
+          ret.row(ind) -= df[d].row(idx);
 
         c *= WGHTS(indsInner(d));
       }
