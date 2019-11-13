@@ -1,5 +1,6 @@
 #include "../../etc/indexing.h"
 #include "../../etc/types.h"
+#include <iostream>
 
 int zero_index(iVecr inds, int N, int d) {
   // let inds = (i1, i2, ..., in) where 0 <= i < N for all i.
@@ -24,7 +25,7 @@ void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim) {
   // ret[s] is the value of the derivative of qh in  direction d at node s
   // ret, qh have shape (N^ndim, V)
   int N = DERVALS.cols();
-  int V = qh.size() - pow(N, ndim);
+  int V = qh.cols();
   int Nd_ = pow(N, ndim - 1);
 
   iVec inds = iVec::Zero(ndim - 1);
@@ -33,6 +34,7 @@ void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim) {
   for (int ind = 0; ind < Nd_; ind++) {
 
     int ind_ = zero_index(inds, N, d);
+
     MatMap qh_(qh.data() + ind_ * V, N, V, OuterStride(stride));
     MatMap ret_(ret.data() + ind_ * V, N, V, OuterStride(stride));
 
@@ -47,7 +49,7 @@ void endpts(Matr ret, Matr qh, int d, int e, Matr ENDVALS, int ndim) {
   // ret has shape (N^(ndim-1), V), qh has shape (N^ndim, V)
 
   int N = ENDVALS.cols();
-  int V = qh.size() - pow(N, ndim);
+  int V = qh.cols();
   int Nd_ = pow(N, ndim - 1);
 
   iVec inds = iVec::Zero(ndim - 1);

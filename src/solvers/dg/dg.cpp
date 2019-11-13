@@ -5,6 +5,7 @@
 #include "../poly/evaluations.h"
 #include "dg_matrices.h"
 #include <iostream>
+#include <vector>
 
 const int DG_IT = 50;       // No. of iterations of non-Newton solver attempted
 const double DG_TOL = 6e-6; // Convergence tolerance
@@ -13,11 +14,10 @@ void initial_guess(Matr q, Matr w) {
   // Returns a Galerkin intial guess consisting of the value of q at t=0
   int N = q.size() / w.size();
   int ROWS = w.rows();
+  int COLS = w.cols();
 
   for (int i = 0; i < N; i++)
-    for (int j = 0; j < ROWS; j++) {
-      q.row(i * ROWS + j) = w.row(j);
-    }
+    q.block(i * ROWS, 0, ROWS, COLS) = w;
 }
 
 Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
@@ -66,8 +66,12 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
       }
     }
 
-    int idx = 0;
-    while (idx < Nd) {
+    // TODO: work out why indsInner.setZero() is needed:
+    // update_inds should set indsInner to all zeros at the end of the loop
+    // below, but sometimes it acquires random entries instead
+    indsInner.setZero();
+
+    for (int idx = 0; idx < Nd; idx++) {
 
       int ind = t * Nd + idx;
 
@@ -92,7 +96,6 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
       ret.row(ind) *= c;
 
       update_inds(indsInner, N);
-      idx++;
     }
   }
 
@@ -130,8 +133,8 @@ Vec obj(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
         idx++;
       }
     }
-  VecMap ret(tmp.data(), N * Nd * V);
 
+  VecMap ret(tmp.data(), tmp.rows() * tmp.cols());
   return ret;
 }
 
@@ -187,10 +190,9 @@ Mat dg_predictor(void (*F)(double *, double *, int),
   Mat Ww(N * Nd, V);
   Mat q0(N * Nd, V);
 
-  for (int ind = 0; ind < wh.size(); ind += Nd * V) {
+  for (int ind = 0; ind < wh.rows(); ind += Nd) {
 
-    MatMap wi(wh.data() + ind, Nd, V, OuterStride(V));
-    MatMap qi(qh.data() + ind * N, N * Nd, V, OuterStride(V));
+    MatMap wi(wh.data() + ind * V, Nd, V, OuterStride(V));
 
     initial_condition(Ww, wi, WGHTS, ENDVALS, ndim);
 
@@ -202,15 +204,13 @@ Mat dg_predictor(void (*F)(double *, double *, int),
 
     if (STIFF) {
 
-      VecMap q0v(q0.data(), N * Nd * V);
+      VecMap q0v(q0.data(), q0.rows() * q0.cols());
 
       Vec res = nonlin_solve(obj_bound, q0v, DG_TOL);
 
-      std::cout << "qh_rows " << qh.rows() << " qh_cols " << qh.cols()
-                << " ind*N " << ind * N << "\n";
+      Mat resMat(MatMap(res.data(), N * Nd, V, OuterStride(V)));
 
-      qh.block(ind * N, 0, N * Nd, V) =
-          MatMap(res.data(), N * Nd, V, OuterStride(V));
+      qh.block(ind * N, 0, N * Nd, V) = resMat;
 
     } else {
 
@@ -225,7 +225,7 @@ Mat dg_predictor(void (*F)(double *, double *, int),
           q0 = q1;
           continue;
         } else {
-          qi = q1;
+          qh.block(ind * N, 0, N * Nd, V) = q1;
           break;
         }
       }

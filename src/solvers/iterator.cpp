@@ -63,22 +63,24 @@ void iterator(void (*F)(double *, double *, int),
 
     std::cout << "qh\n";
 
-    // finite_volume(F, B, S, u, qh, nX, dt, dX, FLUX, N);
+    finite_volume(F, B, S, u, qh, nX, dt, dX, FLUX, N);
 
-    // t += dt;
-    // count += 1;
+    std::cout << "fv\n";
 
-    // if (t >= double(pushCount + 1) / double(ndt) * tf) {
-    //   ret.row(pushCount) = VecMap(u.data(), u.size());
-    //   pushCount += 1;
-    // }
+    t += dt;
+    count += 1;
 
-    // if (u.array().isNaN().any()) {
-    //   ret.row(pushCount) = VecMap(uprev.data(), uprev.size());
-    //   ret.row(pushCount + 1) = VecMap(u.data(), u.size());
-    // }
+    if (t >= double(pushCount + 1) / double(ndt) * tf) {
+      ret.row(pushCount) = VecMap(u.data(), u.size());
+      pushCount += 1;
+    }
 
-    // uprev = u;
+    if (u.array().isNaN().any()) {
+      ret.row(pushCount) = VecMap(uprev.data(), uprev.size());
+      ret.row(pushCount + 1) = VecMap(u.data(), u.size());
+    }
+
+    uprev = u;
   }
 
   ret.row(ndt - 1) = VecMap(u.data(), u.size());

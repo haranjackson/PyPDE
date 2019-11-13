@@ -39,7 +39,7 @@ set (SOURCES
     src/solvers/weno/weno_matrices.cpp)
 
 if (RUN_TEST)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fstandalone-debug")
     SET(SOURCES ${SOURCES} "src/test.cpp")
     add_executable(ader_test ${SOURCES})
 else()
