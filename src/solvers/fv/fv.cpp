@@ -3,6 +3,7 @@
 #include "../poly/basis.h"
 #include "../poly/evaluations.h"
 #include "fluxes.h"
+#include <iostream>
 
 void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
              Matr u, Matr qh, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
@@ -73,6 +74,14 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
   }
 }
 
+bool in_bounds(iVecr inds, iVecr bounds, int offset) {
+  for (int i = 0; i < inds.size(); i++) {
+    if (inds(i) + offset < 0 || inds(i) + offset >= bounds(i))
+      return false;
+  }
+  return true;
+}
+
 void interfs(void (*F)(double *, double *, int),
              void (*B)(double *, double *, int), Matr u, Matr qh, iVecr nX,
              double dt, Vecr dX, int FLUX, Vecr NODES, Vecr WGHTS,
@@ -102,21 +111,26 @@ void interfs(void (*F)(double *, double *, int),
   int uCell = 0;
   while (uCell < nX1.prod()) { // (i = 0 ... (nX+1); j = 0 ... (nY+1); etc
 
-    int uind0 = index(indsOuter, nX, -1); // (i-1, j-2, ...)
+    int uind0 = index(indsOuter, nX, -1);  // (i-1, j-2, ...)
+    int ubind0 = index(indsOuter, nX2, 0); // (i, j, ...)
+    bool inBounds0 = in_bounds(indsOuter, nX, -1);
 
-    for (int t = 0; t < WGHTS.size(); t++) {
+    std::cout << indsOuter.transpose() << "\n\n";
 
-      int ind0 = (index(indsOuter, nX2, 0) * N + t) * Nd * V;
+    for (int t = 0; t < N; t++) {
+
+      int ind0 = (ubind0 * N + t) * Nd * V;
       MatMap qh0(qh.data() + ind0, Nd, V, OuterStride(V));
 
       for (int d = 0; d < ndim; d++) {
 
-        int ind = indsOuter(d);
         double c = dt * WGHTS(t) / (2. * dX(d));
 
         indsOuter(d) += 1;
         int uind1 = index(indsOuter, nX, -1);
-        int ind1 = (index(indsOuter, nX2, 0) * N + t) * Nd * V;
+        int ubind1 = index(indsOuter, nX2, 0);
+        bool inBounds1 = in_bounds(indsOuter, nX, -1);
+        int ind1 = (ubind1 * N + t) * Nd * V;
         indsOuter(d) -= 1;
 
         MatMap qh1(qh.data() + ind1, Nd, V, OuterStride(V));
@@ -124,8 +138,7 @@ void interfs(void (*F)(double *, double *, int),
         endpts(q0, qh0, d, 1, ENDVALS, ndim);
         endpts(q1, qh1, d, 0, ENDVALS, ndim);
 
-        int idx = 0;
-        while (idx < Nd_) {
+        for (int idx = 0; idx < Nd_; idx++) {
 
           switch (FLUX) {
           case OSHER:
@@ -146,13 +159,12 @@ void interfs(void (*F)(double *, double *, int),
           for (int i = 0; i < ndim - 1; i++)
             tmp *= WGHTS(indsInner[i]);
 
-          if (ind > 0)
+          if (inBounds0)
             u.row(uind0) -= tmp * (b + f);
-          if (ind < nX(d))
+          if (inBounds1)
             u.row(uind1) -= tmp * (b - f);
 
           update_inds(indsInner, N);
-          idx++;
         }
       }
     }
