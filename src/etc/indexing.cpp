@@ -1,5 +1,4 @@
 #include "types.h"
-#include <iostream>
 
 void update_inds(iVecr inds, iVecr bounds) {
   // Given inds=(i1, i2, ...) and bounds=(n1, n2, ...), increments inds in such

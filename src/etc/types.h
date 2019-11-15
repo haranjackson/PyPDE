@@ -1,10 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-//#define EIGEN_DONT_PARALLELIZE
-
 //#define EIGEN_USE_MKL_ALL
-//#define EIGEN_MKL_DIRECT_CALL
+//#define MKL_DIRECT_CALL
 
 //#define EIGEN_NO_MALLOC
 

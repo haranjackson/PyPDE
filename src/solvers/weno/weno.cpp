@@ -2,7 +2,6 @@
 #include "../poly/basis.h"
 #include "weno_matrices.h"
 #include <cmath>
-#include <iostream>
 
 const double LAMS = 1.;   // WENO side stencil weighting
 const double LAMC = 1e5;  // WENO central stencil weighting

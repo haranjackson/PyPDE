@@ -4,7 +4,7 @@
 #include "../poly/basis.h"
 #include "../poly/evaluations.h"
 #include "dg_matrices.h"
-#include <iostream>
+
 #include <vector>
 
 const int DG_IT = 50;       // No. of iterations of non-Newton solver attempted

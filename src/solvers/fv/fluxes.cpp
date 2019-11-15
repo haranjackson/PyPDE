@@ -5,8 +5,6 @@
 #include "../../etc/system.h"
 #include "../../etc/types.h"
 
-#include <iostream>
-
 Vec Bint(void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d,
          Vecr NODES, Vecr WGHTS) {
   // Returns the jump matrix for B, in the dth direction

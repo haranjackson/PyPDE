@@ -2,8 +2,6 @@
 #include "eigen3/Eigenvalues"
 #include "types.h"
 
-#include <iostream>
-
 Mat system_matrix(void (*F)(double *, double *, int),
                   void (*B)(double *, double *, int), Vecr q, int d) {
 
@@ -31,6 +29,5 @@ double max_abs_eigs(void (*F)(double *, double *, int),
 
   Mat jac = system_matrix(F, B, q, d);
 
-  Eigen::EigenSolver<Mat> es(jac);
-  return es.eigenvalues().array().abs().maxCoeff();
+  return jac.eigenvalues().array().abs().maxCoeff();
 }

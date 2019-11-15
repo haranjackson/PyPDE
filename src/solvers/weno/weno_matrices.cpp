@@ -3,8 +3,6 @@
 #include "../../etc/types.h"
 #include "../../scipy/poly.h"
 
-#include <iostream>
-
 int ceil(int x, int y) { return x / y + (x % y != 0); }
 
 std::vector<Mat> coefficient_matrices(const std::vector<poly> &basis, int FN2,

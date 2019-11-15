@@ -3,7 +3,6 @@
 #include "../poly/basis.h"
 #include "../poly/evaluations.h"
 #include "fluxes.h"
-#include <iostream>
 
 void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
              Matr u, Matr qh, iVecr nX, double dt, Vecr dX, Vecr WGHTS,
