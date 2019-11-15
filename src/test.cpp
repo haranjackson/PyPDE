@@ -33,9 +33,9 @@ void fill_u(double *_u, int nX, int nY, int V) {
     for (int j = 0; j < nY; j++) {
       int ind = (i * nY + j) * V;
       _u[ind + 0] = 1.;
-      _u[ind + 1] = 0.;
-      _u[ind + 2] = 0.;
-      _u[ind + 3] = 1.;
+      _u[ind + 1] = 2.;
+      _u[ind + 2] = 3.;
+      _u[ind + 3] = 4.;
     }
 }
 
