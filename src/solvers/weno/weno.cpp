@@ -105,12 +105,12 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
 
             VecMap vh(tmp.data() + indw + i * N * stride, N * V);
 
+            // eval to stop lazy evaluation, which causes nans
             vh = coeffs(ub0.block(i, 0, 2 * N - 1, V), N, V, FN2, CN2, ML, MR,
-                        MCL, MCR, SIG);
+                        MCL, MCR, SIG)
+                     .eval();
           }
         }
-
-    std::cout << tmp << "\n\n";
 
     rec = tmp;
     shape(d) -= 2 * (N - 1);
