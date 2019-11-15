@@ -16,6 +16,6 @@ poly lagrange(Vecr x, int i);
 
 Mat end_values(const std::vector<poly> &basis);
 
-Mat derivative_values(const std::vector<poly> &basis, const Vec nodes);
+Mat derivative_values(const std::vector<poly> &basis, Vecr NODES);
 
 #endif // BASIS_H

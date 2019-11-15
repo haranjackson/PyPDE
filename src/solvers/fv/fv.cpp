@@ -60,7 +60,7 @@ void centers(void (*B)(double *, double *, int), void (*S)(double *, double *),
         double tmp = dt * WGHTS(t);
 
         for (int i = 0; i < ndim; i++)
-          tmp *= WGHTS(indsInner[i]);
+          tmp *= WGHTS(indsInner(i));
 
         u.row(uCell) += tmp * s;
 
@@ -155,7 +155,7 @@ void interfs(void (*F)(double *, double *, int),
 
           double tmp = c;
           for (int i = 0; i < ndim - 1; i++)
-            tmp *= WGHTS(indsInner[i]);
+            tmp *= WGHTS(indsInner(i));
 
           if (inBounds0)
             u.row(uind0) -= tmp * (b + f);

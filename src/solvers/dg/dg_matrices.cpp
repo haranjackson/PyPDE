@@ -37,8 +37,8 @@ Mat end_value_products(const std::vector<poly> &basis) {
   return ret;
 }
 
-Mat derivative_products(const std::vector<poly> &basis, const Vec nodes,
-                        const Vec wghts) {
+Mat derivative_products(const std::vector<poly> &basis, Vecr NODES,
+                        Vecr WGHTS) {
   // ret[i,j] = < ψ_i , ψ_j' >
   int N = basis.size();
   Mat ret(N, N);
@@ -47,7 +47,7 @@ Mat derivative_products(const std::vector<poly> &basis, const Vec nodes,
       if (i == j)
         ret(i, j) = (pow(basis[i].eval(1), 2.) - pow(basis[i].eval(0), 2.)) / 2;
       else
-        ret(i, j) = wghts[i] * basis[j].diff(1).eval(nodes[i]);
+        ret(i, j) = WGHTS(i) * basis[j].diff(1).eval(NODES(i));
     }
   return ret;
 }

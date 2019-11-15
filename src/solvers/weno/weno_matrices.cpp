@@ -3,6 +3,8 @@
 #include "../../etc/types.h"
 #include "../../scipy/poly.h"
 
+#include <iostream>
+
 int ceil(int x, int y) { return x / y + (x % y != 0); }
 
 std::vector<Mat> coefficient_matrices(const std::vector<poly> &basis, int FN2,
@@ -37,7 +39,7 @@ Mat oscillation_indicator(const std::vector<poly> &basis) {
   // Generate the oscillation indicator matrix from a set of basis polynomials
 
   int N = basis.size();
-  Mat ret(N, N);
+  Mat ret = Mat::Zero(N, N);
 
   for (int i = 0; i < N; i++)
     for (int j = 0; j < N; j++)
@@ -46,5 +48,6 @@ Mat oscillation_indicator(const std::vector<poly> &basis) {
         poly P = p.intt();
         ret(i, j) += P.eval(1) - P.eval(0);
       }
+
   return ret;
 }

@@ -1,52 +1,44 @@
 #include "../../etc/types.h"
 #include "../poly/basis.h"
 #include "weno_matrices.h"
+#include <cmath>
 #include <iostream>
 
 const double LAMS = 1.;   // WENO side stencil weighting
 const double LAMC = 1e5;  // WENO central stencil weighting
 const double EPS = 1e-14; // WENO epsilon parameter
+const double r = 8.;
 
-void weight(Vecr ret, Matr w, double LAM, Matr SIG, int V) {
-  // Produces the WENO weight for this stencil
-  // NOTE: The denominator is raised to the 8th power.
-  //       The square method is used because pow is slow.
-  for (int i = 0; i < V; i++) {
-    double tmp = w.col(i).transpose() * SIG * w.col(i) + EPS;
-    double tmp2 = tmp * tmp;
-    double tmp4 = tmp2 * tmp2;
-    double den = tmp4 * tmp4;
-    ret(i) = LAM / den;
-  }
-}
-
-void coeffs_inner(Vecr o, Matr w, int V, Dec M, Matr dataBlock, Matr SIG,
-                  Matr num, Vecr den, double LAM) {
+void coeffs_inner(Matr w, int V, Dec M, Matr dataBlock, Matr SIG, Matr num,
+                  Vecr den, double LAM) {
 
   w = M.solve(dataBlock);
-  weight(o, w, LAM, SIG, V);
-  num.array() += w.array().rowwise() * o.transpose().array();
-  den += o;
+
+  for (int i = 0; i < V; i++) {
+    double tmp = w.col(i).transpose() * SIG * w.col(i) + EPS;
+    double o = LAM / std::pow(tmp, r);
+    num.col(i) += o * w.col(i);
+    den(i) += o;
+  }
 }
 
 Vec coeffs(Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR, Dec MCL,
            Dec MCR, Matr SIG) {
   // Calculate coefficients of basis polynomials and weights
 
-  Vec o(V);
   Mat w(N, V);
 
   Mat num = Mat::Zero(N, V);
   Vec den = Vec::Zero(V);
 
-  coeffs_inner(o, w, V, ML, data.block(0, 0, N, V), SIG, num, den, LAMS);
-  coeffs_inner(o, w, V, MR, data.block(N - 1, 0, N, V), SIG, num, den, LAMS);
+  coeffs_inner(w, V, ML, data.block(0, 0, N, V), SIG, num, den, LAMS);
+  coeffs_inner(w, V, MR, data.block(N - 1, 0, N, V), SIG, num, den, LAMS);
 
   if (N > 2) {
-    coeffs_inner(o, w, V, MCL, data.block(FN2, 0, N, V), SIG, num, den, LAMC);
+    coeffs_inner(w, V, MCL, data.block(FN2, 0, N, V), SIG, num, den, LAMC);
 
     if (N % 2 == 0) // Two central stencils (N>3)
-      coeffs_inner(o, w, V, MCR, data.block(CN2, 0, N, V), SIG, num, den, LAMC);
+      coeffs_inner(w, V, MCR, data.block(CN2, 0, N, V), SIG, num, den, LAMC);
   }
 
   w.array() = num.array().rowwise() / den.transpose().array();
@@ -84,7 +76,7 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
 
     int n4 = pow(N, d);
 
-    Mat tmp = Mat::Zero(n1 * n2 * n3 * n4 * N, V);
+    Mat tmp(n1 * n2 * n3 * n4 * N, V);
 
     int stride = n3 * n4 * V;
 

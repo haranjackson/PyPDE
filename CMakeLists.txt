@@ -4,7 +4,7 @@ project(ADER_CPP VERSION 1.0.0 DESCRIPTION "A shared library for solving partial
 
 include_directories(include)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG")
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 # -march=native seems slower sometimes
@@ -12,7 +12,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 set(RUN_TEST 1)
 
-set (SOURCES 
+set (SOURCES
     src/ader.cpp
 
     src/etc/grid.cpp

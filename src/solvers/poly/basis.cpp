@@ -65,12 +65,12 @@ Mat end_values(const std::vector<poly> &basis) {
   return ret;
 }
 
-Mat derivative_values(const std::vector<poly> &basis, const Vec nodes) {
+Mat derivative_values(const std::vector<poly> &basis, Vecr NODES) {
   // ret[i,j] is the derivative of the jth basis function at the ith node
   int N = basis.size();
   Mat ret(N, N);
   for (int i = 0; i < N; i++)
     for (int j = 0; j < N; j++)
-      ret(i, j) = basis[j].diff(1).eval(nodes(i));
+      ret(i, j) = basis[j].diff(1).eval(NODES(i));
   return ret;
 }

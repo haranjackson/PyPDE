@@ -29,18 +29,18 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
 
   Mat ret(Nd * N, V);
 
-  Mat M = Mat::Zero(Nd, V);
-  Mat M1 = Mat::Zero(N * Nd, V);
+  Mat M(N * Nd, V);
+  Mat dM(Nd, V);
 
-  std::vector<Mat> dq(ndim);
   std::vector<Mat> f(ndim);
   std::vector<Mat> df(ndim);
 
   for (int d = 0; d < ndim; d++) {
-    f[d] = M1;
-    df[d] = M;
-    dq[d] = M;
+    f[d] = M;
+    df[d] = dM;
   }
+
+  std::vector<Mat> dq = df;
 
   Mat b(V, V);
 

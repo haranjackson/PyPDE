@@ -16,15 +16,15 @@ void F(double *ret, double *Q, int d) {
   double p = E * r * (g - 1);
 
   if (d == 0) {
-    ret[0] += ru;
-    ret[1] += ru * u + p;
-    ret[2] += rv * u;
-    ret[3] += rE * u + p * u;
+    ret[0] = ru;
+    ret[1] = ru * u + p;
+    ret[2] = rv * u;
+    ret[3] = rE * u + p * u;
   } else {
-    ret[0] += rv;
-    ret[1] += ru * v;
-    ret[2] += rv * v + p;
-    ret[3] += rE * v + p * v;
+    ret[0] = rv;
+    ret[1] = ru * v;
+    ret[2] = rv * v + p;
+    ret[3] = rE * v + p * v;
   }
 }
 

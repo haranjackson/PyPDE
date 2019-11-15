@@ -2,32 +2,35 @@
 #include "eigen3/Eigenvalues"
 #include "types.h"
 
+#include <iostream>
+
 Mat system_matrix(void (*F)(double *, double *, int),
                   void (*B)(double *, double *, int), Vecr q, int d) {
 
   int V = q.size();
 
-  Mat dF;
+  Mat M(V, V);
 
   if (F == NULL)
-    dF = Mat::Zero(V, V);
+    M.setZero();
   else
-    dF = df(F, q, d, Forward);
+    df(M, F, q, d, Forward);
 
   if (B != NULL) {
 
     Mat b(V, V);
     B(b.data(), q.data(), d);
-    dF += b;
+    M += b;
   }
 
-  return dF;
+  return M;
 }
 
 double max_abs_eigs(void (*F)(double *, double *, int),
                     void (*B)(double *, double *, int), Vecr q, int d) {
 
   Mat jac = system_matrix(F, B, q, d);
+
   Eigen::EigenSolver<Mat> es(jac);
   return es.eigenvalues().array().abs().maxCoeff();
 }

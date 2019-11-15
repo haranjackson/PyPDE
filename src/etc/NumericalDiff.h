@@ -7,25 +7,18 @@
 
 enum NumericalDiffMode { Forward, Central };
 
-Mat df(void (*F)(double *, double *, int), Vecr q, int d,
+Mat df(Matr jac, void (*F)(double *, double *, int), Vecr q, int d,
        NumericalDiffMode mode) {
 
-  using std::abs;
-  using std::sqrt;
-
-  double h;
-  const double eps =
-      sqrt(((std::max)(0., Eigen::NumTraits<double>::epsilon())));
+  const double eps = std::sqrt(Eigen::NumTraits<double>::epsilon());
 
   int n = q.size();
-  Mat jac(n, n);
   Vec val1(n);
   Vec val2(n);
-  Vec q_ = q;
 
   switch (mode) {
   case Forward:
-    F(val1.data(), q_.data(), d);
+    F(val1.data(), q.data(), d);
     break;
   case Central:
     break;
@@ -33,35 +26,33 @@ Mat df(void (*F)(double *, double *, int), Vecr q, int d,
     assert(false);
   };
 
-  for (int j = 0; j < n; ++j) {
-    h = eps * abs(q_[j]);
-    if (h == 0.) {
-      h = eps;
-    }
+  for (int i = 0; i < n; i++) {
+
+    double qj = q(i);
+
+    double h = std::max(eps * std::abs(qj), eps);
+
     switch (mode) {
     case Forward:
 
-      q_[j] += h;
-      F(val2.data(), q_.data(), d);
+      q(i) += h;
+      F(val2.data(), q.data(), d);
 
-      q_[j] = q[j];
-      jac.col(j) = (val2 - val1) / h;
+      q(i) = qj;
+      jac.col(i) = (val2 - val1) / h;
       break;
 
     case Central:
 
-      q_[j] += h;
-      F(val2.data(), q_.data(), d);
+      q(i) += h;
+      F(val2.data(), q.data(), d);
 
-      q_[j] -= 2 * h;
-      F(val1.data(), q_.data(), d);
+      q(i) -= 2 * h;
+      F(val1.data(), q.data(), d);
 
-      q_[j] = q[j];
-      jac.col(j) = (val2 - val1) / (2 * h);
+      q(i) = qj;
+      jac.col(i) = (val2 - val1) / (2 * h);
       break;
-
-    default:
-      assert(false);
     };
   }
   return jac;

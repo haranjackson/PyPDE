@@ -5,6 +5,8 @@
 #include "../../etc/system.h"
 #include "../../etc/types.h"
 
+#include <iostream>
+
 Vec Bint(void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d,
          Vecr NODES, Vecr WGHTS) {
   // Returns the jump matrix for B, in the dth direction
@@ -49,10 +51,13 @@ Vec D_OSH(void (*F)(double *, double *, int),
         es.eigenvalues().array().abs();
     ret += WGHTS(i) * (es.eigenvectors() * b);
   }
-  Vec f = ret.real();
-  F(f.data(), qL.data(), d);
-  F(f.data(), qR.data(), d);
-  return f;
+
+  Vec fL(V);
+  Vec fR(V);
+  F(fL.data(), qL.data(), d);
+  F(fR.data(), qR.data(), d);
+
+  return ret.real() + fL + fR;
 }
 
 Vec D_ROE(void (*F)(double *, double *, int),
@@ -75,20 +80,26 @@ Vec D_ROE(void (*F)(double *, double *, int),
   cVec b = es.eigenvectors().colPivHouseholderQr().solve(Δqc).array() *
            es.eigenvalues().array().abs();
 
-  Vec f = (es.eigenvectors() * b).real();
-  F(f.data(), qL.data(), d);
-  F(f.data(), qR.data(), d);
-  return f;
+  Vec fL(V);
+  Vec fR(V);
+  F(fL.data(), qL.data(), d);
+  F(fR.data(), qR.data(), d);
+
+  return (es.eigenvectors() * b).real() + fL + fR;
 }
 
 Vec D_RUS(void (*F)(double *, double *, int),
           void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d) {
 
+  int V = qL.size();
+
   double max1 = max_abs_eigs(F, B, qL, d);
   double max2 = max_abs_eigs(F, B, qR, d);
 
-  Vec f = std::max(max1, max2) * (qL - qR);
-  F(f.data(), qL.data(), d);
-  F(f.data(), qR.data(), d);
-  return f;
+  Vec fL(V);
+  Vec fR(V);
+  F(fL.data(), qL.data(), d);
+  F(fR.data(), qR.data(), d);
+
+  return std::max(max1, max2) * (qL - qR) + fL + fR;
 }
