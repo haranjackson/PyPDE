@@ -115,8 +115,6 @@ void interfs(void (*F)(double *, double *, int),
     int ubind0 = index(indsOuter, nX2, 0); // (i, j, ...)
     bool inBounds0 = in_bounds(indsOuter, nX, -1);
 
-    std::cout << indsOuter.transpose() << "\n\n";
-
     for (int t = 0; t < N; t++) {
 
       int ind0 = (ubind0 * N + t) * Nd * V;

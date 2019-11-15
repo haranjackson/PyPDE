@@ -29,8 +29,8 @@ void coeffs_inner(Vecr o, Matr w, int V, Dec M, Matr dataBlock, Matr SIG,
   den += o;
 }
 
-void coeffs(Matr ret, Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR,
-            Dec MCL, Dec MCR, Matr SIG) {
+Vec coeffs(Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR, Dec MCL,
+           Dec MCR, Matr SIG) {
   // Calculate coefficients of basis polynomials and weights
 
   Vec o(V);
@@ -49,23 +49,8 @@ void coeffs(Matr ret, Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR,
       coeffs_inner(o, w, V, MCR, data.block(CN2, 0, N, V), SIG, num, den, LAMC);
   }
 
-  ret.array() = num.array().rowwise() / den.transpose().array();
-}
-
-Mat weno1(Matr ub, int nx, int N, int V, int FN2, int CN2, Dec ML, Dec MR,
-          Dec MCL, Dec MCR, Matr SIG) {
-  // Returns the WENO reconstruction of u using polynomials in x
-  // Shape of ub: (nx + 2(N-1), V)
-  // Shapw of wh: (nx * N, V)
-
-  Mat wh(nx * N, V);
-
-  for (int i = 0; i < nx; i++)
-
-    coeffs(wh.block(i * N, 0, N, V), ub.block(i, 0, 2 * N - 1, V), N, V, FN2,
-           CN2, ML, MR, MCL, MCR, SIG);
-
-  return wh;
+  w.array() = num.array().rowwise() / den.transpose().array();
+  return VecMap(w.data(), w.size());
 }
 
 Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
@@ -81,6 +66,11 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
   int ndim = nX.size();
 
   for (int d = 0; d < ndim; d++) {
+
+    // shape is shape of rec at each iteration, = (m_1,m_2,...,m_ndim)
+    // n1 = m_1 x m_2 x...x m_(d-1)
+    // n2 = m_d - 2(N-1)
+    // n3 = m_(d+1) x m_(d+2) x...x m_ndim
 
     int n1 = 1;
     for (int i = 0; i < d; i++)
@@ -102,18 +92,25 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
       for (int i3 = 0; i3 < n3; i3++)
         for (int i4 = 0; i4 < n4; i4++) {
 
-          int indu = (i1 * shape(d) * n3 + i3) * n4 + i4;
-          int indw = (i1 * n2 * n3 + i3) * n4 + i4;
+          int indu = ((i1 * shape(d) * n3 + i3) * n4 + i4) * V;
+          int indw = ((i1 * n2 * n3 + i3) * n4 + i4) * N * V;
 
           MatMap ub0(rec.data() + indu, shape(d), V, OuterStride(stride));
 
-          Mat wh0 =
-              MatMap(tmp.data() + indw, n2, N * V, OuterStride(N * stride));
+          // Returns the WENO reconstruction of u using polynomials in x
+          // Shape of ub0: (n2 + 2(N-1), V)
+          // Shapw of wh: (n2 * N, V)
 
-          Mat wh = weno1(ub0, n2, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
+          for (int i = 0; i < n2; i++) {
 
-          wh0 = MatMap(wh.data(), n2, N * V, OuterStride(N * V));
+            VecMap vh(tmp.data() + indw + i * N * stride, N * V);
+
+            vh = coeffs(ub0.block(i, 0, 2 * N - 1, V), N, V, FN2, CN2, ML, MR,
+                        MCL, MCR, SIG);
+          }
         }
+
+    std::cout << tmp << "\n\n";
 
     rec = tmp;
     shape(d) -= 2 * (N - 1);
