@@ -6,6 +6,10 @@
 #include "weno/weno.h"
 #include <iostream>
 
+double max_dev(Matr X) {
+  return (X.array() - X.array().round()).abs().maxCoeff();
+}
+
 double timestep(void (*F)(double *, double *, int),
                 void (*B)(double *, double *, int), Matr u, aVecr dX,
                 double CFL, double t, double tf, int count) {
@@ -49,26 +53,32 @@ void iterator(void (*F)(double *, double *, int),
   iVec nXb = nX;
   nXb.array() += 2;
 
+  WenoSolver wenoSolver(nXb, N, V);
+  DGSolver dgSolver(F, B, S, dX, STIFF, N, V);
+  FVSolver fvSolver(F, B, S, nX, dX, FLUX, N, V);
+
   while (t < tf) {
 
     double dt = timestep(F, B, u, dX, CFL, t, tf, count);
 
     Mat ub = boundaries(u, nX, boundaryTypes, N);
 
-    Mat wh = weno_reconstruction(ub, nXb, N, V);
+    Mat wh = wenoSolver.reconstruction(ub);
 
-    std::cout << "wh\n";
+    std::cout << "max_dev(wh) " << max_dev(wh) << "\n";
 
-    Mat qh = dg_predictor(F, B, S, wh, dt, dX, STIFF, N);
+    Mat qh = dgSolver.predictor(wh, dt);
 
-    std::cout << "qh\n";
+    std::cout << "max_dev(qh) " << max_dev(qh) << "\n";
 
-    finite_volume(F, B, S, u, qh, nX, dt, dX, FLUX, N);
+    fvSolver.apply(u, qh, dt);
 
-    std::cout << "fv\n";
+    std::cout << "max_dev(u) " << max_dev(u) << "\n\n";
 
     t += dt;
     count += 1;
+
+    std::cout << "t=" << t << "\n\n";
 
     if (t >= double(pushCount + 1) / double(ndt) * tf) {
       ret.row(pushCount) = VecMap(u.data(), u.size());

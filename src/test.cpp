@@ -56,7 +56,7 @@ int main() {
 
   fill_u(_u, nX, nY, V);
 
-  double tf = 0.01;
+  double tf = 1.;
   double CFL = 0.9;
   int _boundaryTypes[2] = {0, 0};
 

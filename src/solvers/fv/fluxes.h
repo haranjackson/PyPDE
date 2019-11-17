@@ -10,15 +10,40 @@ const int OSHER = 2;
 Vec Bint(void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d,
          Vecr NODES, Vecr WGHTS);
 
-Vec D_OSH(void (*F)(double *, double *, int),
-          void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d,
-          Vecr NODES, Vecr WGHTS);
+class FluxGenerator {
+private:
+  void (*F)(double *, double *, int);
+  void (*B)(double *, double *, int);
 
-Vec D_ROE(void (*F)(double *, double *, int),
-          void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d,
-          Vecr NODES, Vecr WGHTS);
+  Vec NODES;
+  Vec WGHTS;
 
-Vec D_RUS(void (*F)(double *, double *, int),
-          void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d);
+  int N;
+  int V;
+
+  int FLUX;
+
+  Vec fL;
+  Vec fR;
+  Vec q;
+  Mat M;
+
+  Eigen::EigenSolver<Mat> ES;
+
+  Vec D_OSH(Vecr qL, Vecr qR, int d);
+
+  Vec D_ROE(Vecr qL, Vecr qR, int d);
+
+  Vec D_RUS(Vecr qL, Vecr qR, int d);
+
+public:
+  FluxGenerator(void (*F)(double *, double *, int),
+                void (*B)(double *, double *, int), Vecr NODES, Vecr WGHTS,
+                int V, int FLUX);
+
+  void flux(Vecr ret, Vecr qL, Vecr qR, int d);
+
+  void Bint(Vecr ret, Vecr qL, Vecr qR, int d);
+};
 
 #endif // FLUXES_H

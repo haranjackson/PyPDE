@@ -1,15 +1,26 @@
+#include "weno.h"
 #include "../../etc/types.h"
 #include "../poly/basis.h"
 #include "weno_matrices.h"
 #include <cmath>
 
-const double LAMS = 1.;   // WENO side stencil weighting
-const double LAMC = 1e5;  // WENO central stencil weighting
-const double EPS = 1e-14; // WENO epsilon parameter
-const double r = 8.;
+WenoSolver::WenoSolver(iVecr _nX, int _N, int _V) : nX(_nX), N(_N), V(_V) {
 
-void coeffs_inner(Matr w, int V, Dec M, Matr dataBlock, Matr SIG, Matr num,
-                  Vecr den, double LAM) {
+  FN2 = (int)floor((N - 1) / 2.);
+  CN2 = (int)ceil((N - 1) / 2.);
+
+  std::vector<poly> basis = basis_polys(N);
+  std::vector<Mat> coeffMats = coefficient_matrices(basis, FN2, CN2);
+
+  ML = Dec(coeffMats[0]);
+  MR = Dec(coeffMats[1]);
+  MCL = Dec(coeffMats[2]);
+  MCR = Dec(coeffMats[3]);
+  SIG = oscillation_indicator(basis);
+}
+
+void WenoSolver::coeffs_inner(Matr w, Dec M, Matr dataBlock, Matr num, Vecr den,
+                              double LAM) {
 
   w = M.solve(dataBlock);
 
@@ -21,8 +32,7 @@ void coeffs_inner(Matr w, int V, Dec M, Matr dataBlock, Matr SIG, Matr num,
   }
 }
 
-Vec coeffs(Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR, Dec MCL,
-           Dec MCR, Matr SIG) {
+Vec WenoSolver::coeffs(Matr data) {
   // Calculate coefficients of basis polynomials and weights
 
   Mat w(N, V);
@@ -30,22 +40,21 @@ Vec coeffs(Matr data, int N, int V, int FN2, int CN2, Dec ML, Dec MR, Dec MCL,
   Mat num = Mat::Zero(N, V);
   Vec den = Vec::Zero(V);
 
-  coeffs_inner(w, V, ML, data.block(0, 0, N, V), SIG, num, den, LAMS);
-  coeffs_inner(w, V, MR, data.block(N - 1, 0, N, V), SIG, num, den, LAMS);
+  coeffs_inner(w, ML, data.block(0, 0, N, V), num, den, LAMS);
+  coeffs_inner(w, MR, data.block(N - 1, 0, N, V), num, den, LAMS);
 
   if (N > 2) {
-    coeffs_inner(w, V, MCL, data.block(FN2, 0, N, V), SIG, num, den, LAMC);
+    coeffs_inner(w, MCL, data.block(FN2, 0, N, V), num, den, LAMC);
 
     if (N % 2 == 0) // Two central stencils (N>3)
-      coeffs_inner(w, V, MCR, data.block(CN2, 0, N, V), SIG, num, den, LAMC);
+      coeffs_inner(w, MCR, data.block(CN2, 0, N, V), num, den, LAMC);
   }
 
   w.array() = num.array().rowwise() / den.transpose().array();
   return VecMap(w.data(), w.size());
 }
 
-Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
-               Dec MR, Dec MCL, Dec MCR, Matr SIG) {
+Mat WenoSolver::reconstruction(Matr ub) {
   // Returns the WENO reconstruction of u using polynomials in y
   // Size of ub: (nx + 2(N-1)) * (ny + 2(N-1)) * V
   // Size of wh: nx * ny * N * N * V
@@ -97,9 +106,7 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
             VecMap vh(tmp.data() + indw + i * N * stride, N * V);
 
             // eval to stop lazy evaluation, which causes nans
-            vh = coeffs(ub0.block(i, 0, 2 * N - 1, V), N, V, FN2, CN2, ML, MR,
-                        MCL, MCR, SIG)
-                     .eval();
+            vh = coeffs(ub0.block(i, 0, 2 * N - 1, V)).eval();
           }
         }
 
@@ -108,21 +115,4 @@ Mat weno_inner(Matr ub, iVecr nX, int N, int V, int FN2, int CN2, Dec ML,
   }
 
   return rec;
-}
-
-Mat weno_reconstruction(Matr ub, iVecr nX, int N, int V) {
-
-  int FN2 = (int)floor((N - 1) / 2.);
-  int CN2 = (int)ceil((N - 1) / 2.);
-
-  std::vector<poly> basis = basis_polys(N);
-
-  std::vector<Mat> coeffMats = coefficient_matrices(basis, FN2, CN2);
-  Dec ML(coeffMats[0]);
-  Dec MR(coeffMats[1]);
-  Dec MCL(coeffMats[2]);
-  Dec MCR(coeffMats[3]);
-  Mat SIG = oscillation_indicator(basis);
-
-  return weno_inner(ub, nX, N, V, FN2, CN2, ML, MR, MCL, MCR, SIG);
 }

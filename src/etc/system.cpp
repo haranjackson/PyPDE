@@ -3,7 +3,7 @@
 #include "eigen3/Eigenvalues"
 #include "types.h"
 
-const bool USE_SPECTRA = false;
+const bool USE_SPECTRA = true;
 
 Mat system_matrix(void (*F)(double *, double *, int),
                   void (*B)(double *, double *, int), Vecr q, int d) {
@@ -36,7 +36,7 @@ double max_abs_eig_spectra(Matr M) {
   eigs.init();
   eigs.compute();
 
-  return eigs.eigenvalues().array().abs()(0);
+  return std::abs(eigs.eigenvalues()(0));
 }
 
 double max_abs_eigs(void (*F)(double *, double *, int),

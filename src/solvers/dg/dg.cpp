@@ -1,3 +1,4 @@
+#include "dg.h"
 #include "../../etc/indexing.h"
 #include "../../etc/types.h"
 #include "../../scipy/newton_krylov.h"
@@ -6,9 +7,6 @@
 #include "dg_matrices.h"
 
 #include <vector>
-
-const int DG_IT = 50;       // No. of iterations of non-Newton solver attempted
-const double DG_TOL = 6e-6; // Convergence tolerance
 
 void initial_guess(Matr q, Matr w) {
   // Returns a Galerkin intial guess consisting of the value of q at t=0
@@ -20,12 +18,35 @@ void initial_guess(Matr q, Matr w) {
     q.block(i * ROWS, 0, ROWS, COLS) = w;
 }
 
-Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
-        void (*S)(double *, double *), Matr q, Matr Ww, double dt, Vecr dX,
-        int N, int V, Matr DERVALS, Vecr WGHTS, Matr DG_DER) {
+DGSolver::DGSolver(void (*_F)(double *, double *, int),
+                   void (*_B)(double *, double *, int),
+                   void (*_S)(double *, double *), Vecr _dX, bool _STIFF,
+                   int _N, int _V)
+    : F(_F), B(_B), S(_S), dX(_dX), STIFF(_STIFF), N(_N), V(_V) {
 
-  int ndim = dX.size();
-  int Nd = pow(N, ndim);
+  ndim = dX.size();
+  Nd = pow(N, ndim);
+
+  std::vector<poly> basis = basis_polys(N);
+  NODES = scaled_nodes(N);
+  WGHTS = scaled_weights(N);
+
+  DERVALS = derivative_values(basis, NODES);
+  ENDVALS = end_values(basis);
+
+  Mat DG_END = end_value_products(basis);
+  Mat DG_DER = derivative_products(basis, NODES, WGHTS);
+  DG_MAT = DG_END - DG_DER.transpose();
+
+  std::vector<Mat> tmp(ndim + 1);
+  tmp[0] = DG_MAT;
+  for (int i = 0; i < ndim; i++)
+    tmp[i + 1] = WGHTS.asDiagonal();
+
+  DG_U = Dec(kron(tmp));
+}
+
+Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
 
   Mat ret(Nd * N, V);
 
@@ -104,14 +125,10 @@ Mat rhs(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
   return ret;
 }
 
-Vec obj(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
-        void (*S)(double *, double *), Vecr q, Matr Ww, double dt, Vecr dX,
-        int N, int V, int ndim, Matr DG_MAT, Matr DERVALS, Matr DG_DER,
-        Vecr WGHTS) {
+Vec DGSolver::obj(Vecr q, Matr Ww, double dt) {
 
-  int Nd = pow(N, ndim);
   MatMap qmat(q.data(), N * Nd, V, OuterStride(V));
-  Mat tmp = rhs(F, B, S, qmat, Ww, dt, dX, N, V, DERVALS, WGHTS, DG_DER);
+  Mat tmp = rhs(qmat, Ww, dt);
 
   iVec indsInner = iVec::Zero(ndim);
 
@@ -138,10 +155,7 @@ Vec obj(void (*F)(double *, double *, int), void (*B)(double *, double *, int),
   return ret;
 }
 
-void initial_condition(Matr Ww, Matr w, Vecr WGHTS, Matr ENDVALS, int ndim) {
-
-  int N = WGHTS.size();
-  int Nd = pow(N, ndim);
+void DGSolver::initial_condition(Matr Ww, Matr w) {
 
   iVec indsInner = iVec::Zero(ndim);
 
@@ -158,34 +172,9 @@ void initial_condition(Matr Ww, Matr w, Vecr WGHTS, Matr ENDVALS, int ndim) {
     }
 }
 
-Mat dg_predictor(void (*F)(double *, double *, int),
-                 void (*B)(double *, double *, int),
-                 void (*S)(double *, double *), Matr wh, double dt, Vecr dX,
-                 bool STIFF, int N) {
-
-  int ndim = dX.size();
-  int Nd = pow(N, ndim);
-  int V = wh.cols();
+Mat DGSolver::predictor(Matr wh, double dt) {
 
   Mat qh(wh.rows() * N, V);
-
-  std::vector<poly> basis = basis_polys(N);
-  Vec NODES = scaled_nodes(N);
-  Vec WGHTS = scaled_weights(N);
-
-  Mat DERVALS = derivative_values(basis, NODES);
-  Mat ENDVALS = end_values(basis);
-
-  Mat DG_END = end_value_products(basis);
-  Mat DG_DER = derivative_products(basis, NODES, WGHTS);
-  Mat DG_MAT = DG_END - DG_DER.transpose();
-
-  std::vector<Mat> tmp(ndim + 1);
-  tmp[0] = DG_MAT;
-  for (int i = 0; i < ndim; i++)
-    tmp[i + 1] = WGHTS.asDiagonal();
-
-  Dec DG_U(kron(tmp));
 
   Mat Ww(N * Nd, V);
   Mat q0(N * Nd, V);
@@ -194,15 +183,13 @@ Mat dg_predictor(void (*F)(double *, double *, int),
 
     MatMap wi(wh.data() + ind * V, Nd, V, OuterStride(V));
 
-    initial_condition(Ww, wi, WGHTS, ENDVALS, ndim);
-
-    using std::placeholders::_1;
-    VecFunc obj_bound = std::bind(obj, F, B, S, _1, Ww, dt, dX, N, V, ndim,
-                                  DG_MAT, DERVALS, DG_DER, WGHTS);
-
+    initial_condition(Ww, wi);
     initial_guess(q0, wi);
 
     if (STIFF) {
+
+      using std::placeholders::_1;
+      VecFunc obj_bound = std::bind(&DGSolver::obj, this, _1, Ww, dt);
 
       VecMap q0v(q0.data(), q0.rows() * q0.cols());
 
@@ -216,8 +203,7 @@ Mat dg_predictor(void (*F)(double *, double *, int),
 
       for (int count = 0; count < DG_IT; count++) {
 
-        Mat q1 = DG_U.solve(
-            rhs(F, B, S, q0, Ww, dt, dX, N, V, DERVALS, WGHTS, DG_DER));
+        Mat q1 = DG_U.solve(rhs(q0, Ww, dt));
 
         aMat absDiff = (q1 - q0).array().abs();
 
