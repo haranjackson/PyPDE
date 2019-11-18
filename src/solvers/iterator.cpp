@@ -6,10 +6,6 @@
 #include "weno/weno.h"
 #include <iostream>
 
-double max_dev(Matr X) {
-  return (X.array() - X.array().round()).abs().maxCoeff();
-}
-
 double timestep(void (*F)(double *, double *, int),
                 void (*B)(double *, double *, int), Matr u, aVecr dX,
                 double CFL, double t, double tf, int count) {
@@ -65,15 +61,9 @@ void iterator(void (*F)(double *, double *, int),
 
     Mat wh = wenoSolver.reconstruction(ub);
 
-    std::cout << "max_dev(wh) " << max_dev(wh) << "\n";
-
     Mat qh = dgSolver.predictor(wh, dt);
 
-    std::cout << "max_dev(qh) " << max_dev(qh) << "\n";
-
     fvSolver.apply(u, qh, dt);
-
-    std::cout << "max_dev(u) " << max_dev(u) << "\n\n";
 
     t += dt;
     count += 1;
@@ -86,6 +76,7 @@ void iterator(void (*F)(double *, double *, int),
     }
 
     if (u.array().isNaN().any()) {
+      std::cout << "NaNs found";
       ret.row(pushCount) = VecMap(uprev.data(), uprev.size());
       ret.row(pushCount + 1) = VecMap(u.data(), u.size());
     }

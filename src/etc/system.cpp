@@ -3,8 +3,6 @@
 #include "eigen3/Eigenvalues"
 #include "types.h"
 
-const bool USE_SPECTRA = true;
-
 Mat system_matrix(void (*F)(double *, double *, int),
                   void (*B)(double *, double *, int), Vecr q, int d) {
 
@@ -44,7 +42,9 @@ double max_abs_eigs(void (*F)(double *, double *, int),
 
   Mat jac = system_matrix(F, B, q, d);
 
-  if (USE_SPECTRA)
+  // TODO: work out when it is optimal to use Spectra
+  // (presumably for larger matrices)
+  if (jac.cols() > 5)
     return max_abs_eig_spectra(jac);
   else
     return jac.eigenvalues().array().abs().maxCoeff();
