@@ -1,4 +1,4 @@
-#include "ader.h"
+#include "../src/api.h"
 #include <cstddef>
 
 void F(double *ret, double *Q, int d) {
@@ -67,7 +67,7 @@ int main() {
   int ndt = 100;
   double _ret[ndt * nX * nY * V];
 
-  ader_solver(F, B, S, _u, tf, _nX, ndim, _dX, CFL, _boundaryTypes, STIFF, FLUX,
-              N, V, ndt, _ret);
+  ader_solver(F, B, S, true, false, false, _u, tf, _nX, ndim, _dX, CFL,
+              _boundaryTypes, STIFF, FLUX, N, V, ndt, _ret);
   return 0;
 }

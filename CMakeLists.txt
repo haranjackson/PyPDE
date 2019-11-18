@@ -9,10 +9,10 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 # -march=native seems slower sometimes
 # -ffast-math causes nans in some tests
 
-set(RUN_TEST 0)
+set(RUN_TEST 1)
 
 set (SOURCES
-    src/ader.cpp
+    src/api.cpp
 
     src/etc/grid.cpp
     src/etc/indexing.cpp
@@ -39,7 +39,7 @@ set (SOURCES
 
 if (RUN_TEST)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fstandalone-debug")
-    SET(SOURCES ${SOURCES} "src/test.cpp")
+    SET(SOURCES ${SOURCES} "tests/test.cpp")
     add_executable(ader_test ${SOURCES})
 else()
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -DNDEBUG -fno-math-errno")

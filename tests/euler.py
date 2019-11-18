@@ -1,5 +1,8 @@
+import matplotlib.pyplot as plt
 from numba import jit
 from numpy import array, concatenate, inner, zeros
+
+from pypde import ader_solver
 
 
 @jit
@@ -99,3 +102,10 @@ def _test_euler():
     L = [1.]
 
     return u, tf, L
+
+
+def test_euler():
+
+    u, tf, L = _test_euler()
+    tf = 1
+    return ader_solver(u, tf, L, F=F_reactive_euler, S=None)

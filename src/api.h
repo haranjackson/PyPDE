@@ -9,4 +9,7 @@ extern "C" void ader_solver(void (*F)(double *, double *, int),
                             int *_boundaryTypes, bool STIFF, int FLUX, int N,
                             int V, int ndt, double *_ret);
 
+extern "C" void weno_solver(double *ret, double *_u, int *_nX, int ndim, int N,
+                            int V);
+
 #endif
