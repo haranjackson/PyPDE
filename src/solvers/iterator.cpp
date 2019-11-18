@@ -47,7 +47,7 @@ void iterator(void (*F)(double *, double *, int),
   int pushCount = 0;
 
   iVec nXb = nX;
-  nXb.array() += 2;
+  nXb.array() += 2 * N;
 
   WenoSolver wenoSolver(nXb, N, V);
   DGSolver dgSolver(F, B, S, dX, STIFF, N, V);

@@ -25,6 +25,9 @@ SOLVER_ARGTYPES = [
 def c_ptr(arr):
 
     if arr.dtype == dtype('int64'):
+        arr = arr.astype('int32')
+
+    if arr.dtype == dtype('int32'):
         ptr = POINTER(c_int)
     else:
         ptr = POINTER(c_double)

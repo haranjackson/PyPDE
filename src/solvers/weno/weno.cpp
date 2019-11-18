@@ -60,7 +60,6 @@ Mat WenoSolver::reconstruction(Matr ub) {
   // Size of wh: nx * ny * N * N * V
 
   iVec shape = nX;
-  shape.array() += 2 * (N - 1);
 
   Mat rec = ub;
   int ndim = nX.size();

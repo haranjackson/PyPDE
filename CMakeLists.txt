@@ -9,7 +9,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 # -march=native seems slower sometimes
 # -ffast-math causes nans in some tests
 
-set(RUN_TEST 1)
+set(RUN_TEST 0)
 
 set (SOURCES
     src/api.cpp

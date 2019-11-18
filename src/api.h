@@ -1,5 +1,5 @@
-#ifndef ADER_H
-#define ADER_H
+#ifndef API_H
+#define API_H
 
 extern "C" void ader_solver(void (*F)(double *, double *, int),
                             void (*B)(double *, double *, int),
