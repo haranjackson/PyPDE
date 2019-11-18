@@ -1,6 +1,7 @@
 import sys
 from ctypes import CDLL, POINTER, c_bool, c_double, c_int, c_void_p
 
+import matplotlib.pyplot as plt
 from numba import carray, cfunc, jit
 from numba.types import CPointer, double, intc, void
 from numpy import array, dtype, zeros
@@ -80,12 +81,21 @@ def main(u,
 
     if F is None:
         F = lambda Q, d: zeros(V)
+        useF = False
+    else:
+        useF = True
 
     if B is None:
         B = lambda Q, d: zeros((V, V))
+        useB = False
+    else:
+        useB = True
 
     if S is None:
         S = lambda Q: zeros(V)
+        useS = False
+    else:
+        useS = True
 
     F_Sig = 'double[:](double[:], intc)'
     B_Sig = 'double[:,:](double[:], intc)'
@@ -124,7 +134,7 @@ def main(u,
     solver = libader.ader_solver
 
     solver.argtypes = [
-        c_void_p, c_void_p, c_void_p,
+        c_void_p, c_void_p, c_void_p, c_bool, c_bool, c_bool,
         POINTER(c_double), c_double,
         POINTER(c_int), c_int,
         POINTER(c_double), c_double,
@@ -138,12 +148,15 @@ def main(u,
 
     ur = u.ravel()
 
-    solver(_F.ctypes, _B.ctypes, _S.ctypes, c_ptr(ur), tf, c_ptr(nX), ndim,
-           c_ptr(dX), CFL, c_ptr(boundaryTypes), STIFF, FLUXES[flux], N, V,
-           ndt, c_ptr(ret))
+    solver(_F.ctypes, _B.ctypes, _S.ctypes, useF, useB, useS, c_ptr(ur), tf,
+           c_ptr(nX), ndim, c_ptr(dX), CFL, c_ptr(boundaryTypes), STIFF,
+           FLUXES[flux], N, V, ndt, c_ptr(ret))
+
+    return ret.reshape((ndt, ) + u.shape)
 
 
 def test_euler():
 
     u, tf, L = _test_euler()
-    main(u, tf, L, F=F_reactive_euler, S=S_reactive_euler)
+    tf = 1
+    return main(u, tf, L, F=F_reactive_euler, S=S_reactive_euler)
