@@ -20,7 +20,7 @@ int zero_index(iVecr inds, int N, int d) {
   return ret;
 }
 
-void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim) {
+void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim, Vecr dX) {
   // ret[s] is the value of the derivative of qh in  direction d at node s
   // ret, qh have shape (N^ndim, V)
   int N = DERVALS.cols();
@@ -41,6 +41,7 @@ void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim) {
 
     update_inds(inds, N);
   }
+  ret /= dX(d);
 }
 
 void endpts(Matr ret, Matr qh, int d, int e, Matr ENDVALS, int ndim) {

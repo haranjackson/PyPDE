@@ -79,12 +79,10 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
 
     for (int d = 0; d < ndim; d++) {
 
-      derivs(dq[d], q.block(t * Nd, 0, Nd, V), d, DERVALS, ndim);
-      dq[d] /= dX(d);
+      derivs(dq[d], q.block(t * Nd, 0, Nd, V), d, DERVALS, ndim, dX);
 
       if (F != NULL) {
-        derivs(df[d], f[d].block(t * Nd, 0, Nd, V), d, DERVALS, ndim);
-        df[d] /= dX(d);
+        derivs(df[d], f[d].block(t * Nd, 0, Nd, V), d, DERVALS, ndim, dX);
       }
     }
 

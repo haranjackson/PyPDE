@@ -62,7 +62,7 @@ void FVSolver::centers(Matr u, Matr qh, double dt) {
       MatMap qhi(qh.data() + tCell, Nd, V, OuterStride(V));
 
       for (int d = 0; d < ndim; d++)
-        derivs(dq[d], qhi, d, DERVALS, ndim);
+        derivs(dq[d], qhi, d, DERVALS, ndim, dX);
 
       int idx = 0;
       while (idx < Nd) {
@@ -75,7 +75,7 @@ void FVSolver::centers(Matr u, Matr qh, double dt) {
         if (B != NULL)
           for (int d = 0; d < ndim; d++) {
             B(b.data(), qhi.row(idx).data(), d);
-            s -= b * dq[d].row(idx) / dX(d);
+            s -= b * dq[d].row(idx);
           }
 
         double tmp = dt * WGHTS(t);
