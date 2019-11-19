@@ -27,7 +27,7 @@ double evaluate(Vec p, double x) {
   int n = p.size();
   double ret = 0;
   for (int i = 0; i < n; i++)
-    ret += p(i) * pow(x, i);
+    ret += p(i) * std::pow(x, i);
   return ret;
 }
 

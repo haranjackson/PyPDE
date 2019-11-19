@@ -27,8 +27,8 @@ FVSolver::FVSolver(void (*_F)(double *, double *, int),
   nX2.array() += 2;
 
   ndim = nX.size();
-  Nd = pow(N, ndim);
-  Nd_ = pow(N, ndim - 1);
+  Nd = std::pow(N, ndim);
+  Nd_ = std::pow(N, ndim - 1);
 
   NODES = scaled_nodes(N);
   WGHTS = scaled_weights(N);

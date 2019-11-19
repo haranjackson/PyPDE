@@ -11,7 +11,7 @@ int zero_index(iVecr inds, int N, int d) {
     ret *= N;
     ret += inds(i);
   }
-  ret *= pow(N, ndim - d);
+  ret *= std::pow(N, ndim - d);
   for (int i = d + 1; i < ndim; i++) {
     ret *= N;
     ret += inds(i - 1);
@@ -25,10 +25,10 @@ void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim, Vecr dX) {
   // ret, qh have shape (N^ndim, V)
   int N = DERVALS.cols();
   int V = qh.cols();
-  int Nd_ = pow(N, ndim - 1);
+  int Nd_ = std::pow(N, ndim - 1);
 
   iVec inds = iVec::Zero(ndim - 1);
-  int stride = pow(N, ndim - d - 1) * V;
+  int stride = std::pow(N, ndim - d - 1) * V;
 
   for (int ind = 0; ind < Nd_; ind++) {
 
@@ -50,10 +50,10 @@ void endpts(Matr ret, Matr qh, int d, int e, Matr ENDVALS, int ndim) {
 
   int N = ENDVALS.cols();
   int V = qh.cols();
-  int Nd_ = pow(N, ndim - 1);
+  int Nd_ = std::pow(N, ndim - 1);
 
   iVec inds = iVec::Zero(ndim - 1);
-  int stride = pow(N, ndim - d - 1) * V;
+  int stride = std::pow(N, ndim - d - 1) * V;
 
   for (int ind = 0; ind < Nd_; ind++) {
 

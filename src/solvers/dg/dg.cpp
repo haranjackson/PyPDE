@@ -26,7 +26,7 @@ DGSolver::DGSolver(void (*_F)(double *, double *, int),
     : F(_F), B(_B), S(_S), dX(_dX), STIFF(_STIFF), N(_N), V(_V) {
 
   ndim = dX.size();
-  Nd = pow(N, ndim);
+  Nd = std::pow(N, ndim);
 
   std::vector<poly> basis = basis_polys(N);
   NODES = scaled_nodes(N);

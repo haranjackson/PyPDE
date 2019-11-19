@@ -107,7 +107,8 @@ double scalar_search_armijo(double phi0, double *tmp_s, double *tmp_phi,
     double factor = alpha1 * alpha1 * (alpha1 - 1);
     double a = phi_a1 - phi0 + phi0 * alpha1 - alpha1 * alpha1 * phi_a0;
     a /= factor;
-    double b = -(phi_a1 - phi0 + phi0 * alpha1) + pow(alpha1, 3.) * phi_a0;
+    double b =
+        -(phi_a1 - phi0 + phi0 * alpha1) + alpha1 * alpha1 * alpha1 * phi_a0;
     b /= factor;
 
     double alpha2 = (-b + sqrt(std::abs(b * b + 3 * a * phi0))) / (3. * a);

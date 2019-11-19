@@ -44,9 +44,11 @@ Mat derivative_products(const std::vector<poly> &basis, Vecr NODES,
   Mat ret(N, N);
   for (int i = 0; i < N; i++)
     for (int j = 0; j < N; j++) {
-      if (i == j)
-        ret(i, j) = (pow(basis[i].eval(1), 2.) - pow(basis[i].eval(0), 2.)) / 2;
-      else
+      if (i == j) {
+        double eval0 = basis[i].eval(0);
+        double eval1 = basis[i].eval(1);
+        ret(i, j) = (eval1 * eval1 - eval0 * eval0) / 2;
+      } else
         ret(i, j) = WGHTS(i) * basis[j].diff(1).eval(NODES(i));
     }
   return ret;

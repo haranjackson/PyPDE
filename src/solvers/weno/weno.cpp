@@ -81,7 +81,7 @@ Mat WenoSolver::reconstruction(Matr ub) {
     for (int i = d + 1; i < ndim; i++)
       n3 *= shape(i);
 
-    int n4 = pow(N, d);
+    int n4 = std::pow(N, d);
 
     Mat tmp(n1 * n2 * n3 * n4 * N, V);
 
