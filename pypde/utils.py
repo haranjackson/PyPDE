@@ -2,7 +2,7 @@ import sys
 from ctypes import POINTER, c_bool, c_double, c_int, c_void_p
 
 from numba.types import CPointer, double, intc, void
-from numpy import array, dtype
+from numpy import array, dtype, int32
 
 F_Csig = void(CPointer(double), CPointer(double), intc)
 B_Csig = void(CPointer(double), CPointer(double), intc)
@@ -24,13 +24,12 @@ SOLVER_ARGTYPES = [
 
 def c_ptr(arr):
 
-    if arr.dtype == dtype('int64'):
-        arr = arr.astype('int32')
-
     if arr.dtype == dtype('int32'):
         ptr = POINTER(c_int)
-    else:
+    elif arr.dtype == dtype('float64'):
         ptr = POINTER(c_double)
+    else:
+        print('invalid array type')
 
     return arr.ctypes.data_as(ptr)
 
@@ -64,4 +63,4 @@ def parse_boundary_types(boundaryTypes, ndim):
         print(errMsg)
         sys.exit(1)
 
-    return array(ret, dtype=int)
+    return array(ret, dtype=int32)

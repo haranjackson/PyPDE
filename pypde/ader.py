@@ -1,7 +1,7 @@
 from ctypes import CDLL
 
 from numba import carray, cfunc, njit
-from numpy import array, zeros
+from numpy import array, int32, zeros
 
 from pypde.utils import (BOUNDARIES, FLUXES, SOLVER_ARGTYPES, B_Csig, F_Csig,
                          S_Csig, c_ptr, parse_boundary_types)
@@ -20,24 +20,24 @@ def ader_solver(u,
                 boundaryTypes='transitive',
                 CFL=0.9):
 
-    nX = array(u.shape[:-1])
+    nX = array(u.shape[:-1], dtype=int32)
     ndim = len(nX)
     V = u.shape[-1]
     dX = array([L[i] / nX[i] for i in range(len(L))])
 
     boundaryTypes = parse_boundary_types(boundaryTypes, ndim)
 
+    useF = False if F is None else True
     if F is None:
         F = lambda Q, d: zeros(V)
-    useF = False if F is None else True
 
+    useB = False if B is None else True
     if B is None:
         B = lambda Q, d: zeros((V, V))
-    useB = False if B is None else True
 
+    useS = False if S is None else True
     if S is None:
         S = lambda Q: zeros(V)
-    useS = False if S is None else True
 
     F_Sig = 'double[:](double[:], intc)'
     B_Sig = 'double[:,:](double[:], intc)'

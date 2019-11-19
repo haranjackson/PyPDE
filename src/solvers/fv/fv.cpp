@@ -5,6 +5,8 @@
 #include "../poly/evaluations.h"
 #include "fluxes.h"
 
+#include <iostream>
+
 bool in_bounds(iVecr inds, iVecr bounds, int offset) {
   for (int i = 0; i < inds.size(); i++) {
     if (inds(i) + offset < 0 || inds(i) + offset >= bounds(i))
@@ -49,8 +51,7 @@ void FVSolver::centers(Matr u, Matr qh, double dt) {
   iVec indsOuter = iVec::Zero(ndim);
   iVec indsInner = iVec::Zero(ndim);
 
-  int uCell = 0;
-  while (uCell < nX.prod()) {
+  for (int uCell = 0; uCell < nX.prod(); uCell++) {
 
     int recCell = index(indsOuter, nX2, 1);
 
@@ -90,7 +91,6 @@ void FVSolver::centers(Matr u, Matr qh, double dt) {
     }
 
     update_inds(indsOuter, nX);
-    uCell++;
   }
 }
 
@@ -104,11 +104,11 @@ void FVSolver::interfaces(Matr u, Matr qh, double dt) {
   Mat q0(Nd_, V);
   Mat q1(Nd_, V);
 
-  iVec indsOuter = iVec::Zero(ndim);
+  iVec indsOuter = iVec::Zero(ndim); // runs over all cells in ub
   iVec indsInner = iVec::Zero(ndim - 1);
 
-  int uCell = 0;
-  while (uCell < nX1.prod()) { // (i = 0 ... (nX+1); j = 0 ... (nY+1); etc
+  // (i = 0 ... (nX+1); j = 0 ... (nY+1); etc
+  for (int uCell = 0; uCell < nX1.prod(); uCell++) {
 
     int uind0 = index(indsOuter, nX, -1);  // (i-1, j-2, ...)
     int ubind0 = index(indsOuter, nX2, 0); // (i, j, ...)
@@ -127,9 +127,9 @@ void FVSolver::interfaces(Matr u, Matr qh, double dt) {
         int uind1 = index(indsOuter, nX, -1);
         int ubind1 = index(indsOuter, nX2, 0);
         bool inBounds1 = in_bounds(indsOuter, nX, -1);
-        int ind1 = (ubind1 * N + t) * Nd * V;
         indsOuter(d) -= 1;
 
+        int ind1 = (ubind1 * N + t) * Nd * V;
         MatMap qh1(qh.data() + ind1, Nd, V, OuterStride(V));
 
         endpts(q0, qh0, d, 1, ENDVALS, ndim);
@@ -157,7 +157,6 @@ void FVSolver::interfaces(Matr u, Matr qh, double dt) {
     }
 
     update_inds(indsOuter, nX1);
-    uCell++;
   }
 }
 

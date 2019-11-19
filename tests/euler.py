@@ -104,8 +104,8 @@ def _test_euler():
     return u, tf, L
 
 
-def test_euler():
+if __name__ == '__main__':
 
     u, tf, L = _test_euler()
     tf = 1
-    return ader_solver(u, tf, L, F=F_reactive_euler, S=None)
+    ader_solver(u, tf, L, F=F_reactive_euler, S=S_reactive_euler, STIFF=False)

@@ -5,8 +5,9 @@
 #include "../poly/basis.h"
 #include "../poly/evaluations.h"
 #include "dg_matrices.h"
-
 #include <vector>
+
+#include <iostream>
 
 void initial_guess(Matr q, Matr w) {
   // Returns a Galerkin intial guess consisting of the value of q at t=0
@@ -86,11 +87,6 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
         df[d] /= dX(d);
       }
     }
-
-    // TODO: work out why indsInner.setZero() is needed:
-    // update_inds should set indsInner to all zeros at the end of the loop
-    // below, but sometimes it acquires random entries instead
-    indsInner.setZero();
 
     for (int idx = 0; idx < Nd; idx++) {
 
@@ -201,6 +197,7 @@ Mat DGSolver::predictor(Matr wh, double dt) {
 
     } else {
 
+      bool failed = true;
       for (int count = 0; count < DG_IT; count++) {
 
         Mat q1 = DG_U.solve(rhs(q0, Ww, dt));
@@ -212,9 +209,12 @@ Mat DGSolver::predictor(Matr wh, double dt) {
           continue;
         } else {
           qh.block(ind * N, 0, N * Nd, V) = q1;
+          failed = false;
           break;
         }
       }
+      if (failed)
+        std::cout << "DG iteration failed on ind=" << ind << "\n";
     }
   }
   return qh;
