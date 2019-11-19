@@ -1,7 +1,7 @@
 #ifndef FV_H
 #define FV_H
 
-#include "../../etc/types.h"
+#include "../../types.h"
 
 class FVSolver {
 private:

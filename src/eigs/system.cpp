@@ -1,7 +1,7 @@
+#include "../types.h"
 #include "CustomMatProd.h"
 #include "NumericalDiff.h"
 #include "eigen3/Eigenvalues"
-#include "types.h"
 
 Mat system_matrix(void (*F)(double *, double *, int),
                   void (*B)(double *, double *, int), Vecr q, int d) {

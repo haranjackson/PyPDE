@@ -1,7 +1,7 @@
 #ifndef WENO_H
 #define WENO_H
 
-#include "../../etc/types.h"
+#include "../../types.h"
 
 class WenoSolver {
 private:

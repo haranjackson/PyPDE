@@ -1,7 +1,7 @@
 #ifndef NEWTON_KRYLOV_H
 #define NEWTON_KRYLOV_H
 
-#include "../etc/types.h"
+#include "../../types.h"
 
 class KrylovJacobian {
   VecFunc func;

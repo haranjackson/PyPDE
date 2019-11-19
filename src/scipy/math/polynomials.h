@@ -1,7 +1,7 @@
-#ifndef POLY_H
-#define POLY_H
+#ifndef POLYNOMIALS_H
+#define POLYNOMIALS_H
 
-#include "../etc/types.h"
+#include "../../types.h"
 
 Vec integrate(Vec p);
 Vec differentiate(Vec p);
@@ -22,4 +22,4 @@ public:
   poly operator*(const poly &p);
 };
 
-#endif // POLY_H
+#endif // POLYNOMIALS_H

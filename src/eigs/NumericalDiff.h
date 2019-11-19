@@ -1,8 +1,8 @@
 #ifndef NUMERICAL_DIFF_H
 #define NUMERICAL_DIFF_H
 
+#include "../types.h"
 #include "eigen3/Core"
-#include "types.h"
 #include <cassert>
 
 enum NumericalDiffMode { Forward, Central };

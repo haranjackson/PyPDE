@@ -1,7 +1,7 @@
 #ifndef FLUXES_H
 #define FLUXES_H
 
-#include "../../etc/types.h"
+#include "../../types.h"
 
 const int RUSANOV = 0;
 const int ROE = 1;

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../etc/types.h"
+#include "../../types.h"
 #include "lgmres.h"
 #include "newton_krylov.h"
 

@@ -1,7 +1,7 @@
 #ifndef LGMRES_H
 #define LGMRES_H
 
-#include "../etc/types.h"
+#include "../../types.h"
 #include "newton_krylov.h"
 
 class System {

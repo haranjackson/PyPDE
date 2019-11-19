@@ -1,7 +1,7 @@
 #ifndef EVALUATIONS_H
 #define EVALUATIONS_H
 
-#include "../../etc/types.h"
+#include "../types.h"
 
 void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim, Vecr dX);
 

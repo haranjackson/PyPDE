@@ -1,5 +1,5 @@
-#include "../../etc/indexing.h"
-#include "../../etc/types.h"
+#include "../grid/indexing.h"
+#include "../types.h"
 
 int zero_index(iVecr inds, int N, int d) {
   // let inds = (i1, i2, ..., in) where 0 <= i < N for all i.

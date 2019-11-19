@@ -14,25 +14,27 @@ set(RUN_TEST 0)
 set (SOURCES
     src/api.cpp
 
-    src/etc/grid.cpp
-    src/etc/indexing.cpp
-    src/etc/system.cpp
+    src/eigs/system.cpp
 
-    src/scipy/legendre.cpp
-    src/scipy/lgmres.cpp
-    src/scipy/newton_krylov.cpp
-    src/scipy/poly.cpp
+    src/grid/boundaries.cpp
+    src/grid/indexing.cpp
+
+    src/poly/basis.cpp
+    src/poly/evaluations.cpp
+
+    src/scipy/algos/lgmres.cpp
+    src/scipy/algos/newton_krylov.cpp
+
+    src/scipy/math/legendre.cpp
+    src/scipy/math/polynomials.cpp
 
     src/solvers/iterator.cpp
-
-    src/solvers/fv/fluxes.cpp
-    src/solvers/fv/fv.cpp
 
     src/solvers/dg/dg.cpp
     src/solvers/dg/dg_matrices.cpp
 
-    src/solvers/poly/basis.cpp
-    src/solvers/poly/evaluations.cpp
+    src/solvers/fv/fluxes.cpp
+    src/solvers/fv/fv.cpp
 
     src/solvers/weno/weno.cpp
     src/solvers/weno/weno_matrices.cpp)
@@ -42,7 +44,8 @@ if (RUN_TEST)
     SET(SOURCES ${SOURCES} "tests/test.cpp")
     add_executable(ader_test ${SOURCES})
 else()
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -DNDEBUG -fno-math-errno")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fstandalone-debug")
+    #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -DNDEBUG -fno-math-errno")
     add_library(ader SHARED ${SOURCES})
     set_target_properties(ader PROPERTIES VERSION ${PROJECT_VERSION})
 endif()

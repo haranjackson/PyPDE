@@ -1,9 +1,10 @@
-#include "../etc/grid.h"
-#include "../etc/system.h"
-#include "../etc/types.h"
+#include "../eigs/system.h"
+#include "../grid/boundaries.h"
+#include "../types.h"
 #include "dg/dg.h"
 #include "fv/fv.h"
 #include "weno/weno.h"
+
 #include <iostream>
 
 double timestep(void (*F)(double *, double *, int),

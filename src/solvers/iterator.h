@@ -1,7 +1,7 @@
 #ifndef ITERATOR_H
 #define ITERATOR_H
 
-#include "../etc/types.h"
+#include "../types.h"
 
 void iterator(void (*F)(double *, double *, int),
               void (*B)(double *, double *, int), void (*S)(double *, double *),

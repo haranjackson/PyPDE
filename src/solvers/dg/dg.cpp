@@ -1,9 +1,9 @@
 #include "dg.h"
-#include "../../etc/indexing.h"
-#include "../../etc/types.h"
-#include "../../scipy/newton_krylov.h"
-#include "../poly/basis.h"
-#include "../poly/evaluations.h"
+#include "../../grid/indexing.h"
+#include "../../poly/basis.h"
+#include "../../poly/evaluations.h"
+#include "../../scipy/algos/newton_krylov.h"
+#include "../../types.h"
 #include "dg_matrices.h"
 #include <vector>
 

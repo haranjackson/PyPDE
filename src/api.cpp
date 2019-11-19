@@ -1,6 +1,6 @@
-#include "etc/types.h"
 #include "solvers/iterator.h"
 #include "solvers/weno/weno.h"
+#include "types.h"
 
 extern "C" void ader_solver(void (*F)(double *, double *, int),
                             void (*B)(double *, double *, int),

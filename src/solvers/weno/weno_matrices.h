@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include "../../etc/types.h"
-#include "../../scipy/poly.h"
+#include "../../scipy/math/polynomials.h"
+#include "../../types.h"
 
 std::vector<Mat> coefficient_matrices(const std::vector<poly> &basis, int FN2,
                                       int CN2);

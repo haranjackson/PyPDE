@@ -2,8 +2,8 @@
 
 #include "eigen3/Eigenvalues"
 
-#include "../../etc/system.h"
-#include "../../etc/types.h"
+#include "../../eigs/system.h"
+#include "../../types.h"
 #include "fluxes.h"
 
 FluxGenerator::FluxGenerator(void (*_F)(double *, double *, int),

@@ -1,8 +1,8 @@
 #include <vector>
 
-#include "../../etc/types.h"
-#include "../../scipy/legendre.h"
-#include "../../scipy/poly.h"
+#include "../scipy/math/legendre.h"
+#include "../scipy/math/polynomials.h"
+#include "../types.h"
 
 Vec scaled_nodes(int N) {
   std::vector<Vec> tmp = leggauss(N);

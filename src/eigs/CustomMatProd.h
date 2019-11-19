@@ -1,9 +1,9 @@
 #ifndef CUSTOM_MAT_PROD_H
 #define CUSTOM_MAT_PROD_H
 
+#include "../types.h"
 #include "Spectra/GenEigsSolver.h"
 #include "eigen3/Core"
-#include "types.h"
 
 class CustomMatProd {
 private:

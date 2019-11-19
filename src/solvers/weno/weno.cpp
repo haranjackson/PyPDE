@@ -1,6 +1,6 @@
 #include "weno.h"
-#include "../../etc/types.h"
-#include "../poly/basis.h"
+#include "../../poly/basis.h"
+#include "../../types.h"
 #include "weno_matrices.h"
 #include <cmath>
 

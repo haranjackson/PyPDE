@@ -1,7 +1,7 @@
 #ifndef DG_H
 #define DG_H
 
-#include "../../etc/types.h"
+#include "../../types.h"
 
 class DGSolver {
 private:

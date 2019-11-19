@@ -1,7 +1,7 @@
 #ifndef INDEXING_H
 #define INDEXING_H
 
-#include "types.h"
+#include "../types.h"
 
 void update_inds(iVecr inds, iVecr bounds);
 

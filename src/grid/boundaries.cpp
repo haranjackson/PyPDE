@@ -1,5 +1,5 @@
+#include "../types.h"
 #include "indexing.h"
-#include "types.h"
 
 const int TRANSMISSIVE = 0;
 const int PERIODIC = 1;

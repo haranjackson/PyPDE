@@ -1,7 +1,7 @@
 #include <cmath>
 
-#include "../etc/types.h"
-#include "poly.h"
+#include "../../types.h"
+#include "polynomials.h"
 
 Vec integrate(Vec p) {
   // Return the integral of polynomial p, with 0 constant term

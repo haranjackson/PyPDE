@@ -1,6 +1,6 @@
 #include <cmath>
 
-#include "../etc/types.h"
+#include "../../types.h"
 #include "lgmres.h"
 
 Vec lgmres(VecFunc matvec, VecFunc psolve, Vecr b, Vec x,

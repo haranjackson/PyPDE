@@ -1,8 +1,8 @@
 #include "fv.h"
-#include "../../etc/indexing.h"
-#include "../../etc/types.h"
-#include "../poly/basis.h"
-#include "../poly/evaluations.h"
+#include "../../grid/indexing.h"
+#include "../../poly/basis.h"
+#include "../../poly/evaluations.h"
+#include "../../types.h"
 #include "fluxes.h"
 
 #include <iostream>

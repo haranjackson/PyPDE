@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "../etc/types.h"
+#include "../../types.h"
 
 std::vector<Vec> leggauss(int deg);
 

@@ -1,5 +1,5 @@
-#include "../../etc/types.h"
-#include "../../scipy/poly.h"
+#include "../../scipy/math/polynomials.h"
+#include "../../types.h"
 
 Mat kron(std::vector<Mat> &mats) {
   int idx = mats.size();
