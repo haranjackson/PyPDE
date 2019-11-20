@@ -11,13 +11,12 @@ int renormalised_index(int ind, int N, int type, int bound) {
   if (ret < 0) {
     if (type == TRANSMISSIVE)
       return 0;
-    if (type == PERIODIC)
+    else if (type == PERIODIC)
       return bound + ret;
-  }
-  if (ret >= bound) {
+  } else if (ret >= bound) {
     if (type == TRANSMISSIVE)
       return bound - 1;
-    if (type == PERIODIC)
+    else if (type == PERIODIC)
       return ret - bound;
   }
   return ret;
@@ -31,8 +30,8 @@ Mat boundaries(Matr u, iVecr nX, iVecr boundaryTypes, int N) {
   int V = u.size() / nX.prod();
 
   iVec nX_2N = nX;
-
   nX_2N.array() += 2 * N;
+
   int ncell = nX_2N.prod();
 
   Mat ub(ncell, V);
@@ -42,13 +41,12 @@ Mat boundaries(Matr u, iVecr nX, iVecr boundaryTypes, int N) {
 
   for (int idx = 0; idx < ncell; idx++) {
 
-    update_inds(inds, nX_2N);
-
-    for (int d = 0; d < ndim; d++) {
+    for (int d = 0; d < ndim; d++)
       tmpInds(d) = renormalised_index(inds(d), N, boundaryTypes(d), nX(d));
-    }
 
     ub.row(idx) = u.row(index(tmpInds, nX, 0));
+
+    update_inds(inds, nX_2N);
   }
 
   return ub;

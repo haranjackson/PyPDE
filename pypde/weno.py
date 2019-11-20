@@ -1,13 +1,13 @@
 from ctypes import CDLL, POINTER, c_double, c_int
 
-from numpy import array, concatenate, zeros
+from numpy import array, concatenate, int32, zeros
 
 from pypde.utils import c_ptr
 
 
 def weno_solver(u, N=2):
 
-    nX = array(u.shape[:-1])
+    nX = array(u.shape[:-1], dtype=int32)
     ndim = len(nX)
     V = u.shape[-1]
 
