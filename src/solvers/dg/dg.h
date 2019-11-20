@@ -8,7 +8,7 @@ private:
   const int DG_IT = 50; // No. of iterations of non-Newton solver attempted
   const double DG_TOL = 6e-6; // Convergence tolerance
 
-  void (*F)(double *, double *, int);
+  void (*F)(double *, double *, double *, int);
   void (*B)(double *, double *, int);
   void (*S)(double *, double *);
 
@@ -41,7 +41,7 @@ private:
   Mat nonstiff_solve(Matr q0, Matr Ww, double dt);
 
 public:
-  DGSolver(void (*_F)(double *, double *, int),
+  DGSolver(void (*_F)(double *, double *, double *, int),
            void (*_B)(double *, double *, int), void (*_S)(double *, double *),
            Vecr _dX, bool _STIFF, int _N, int _V);
 

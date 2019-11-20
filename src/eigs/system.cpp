@@ -3,8 +3,8 @@
 #include "NumericalDiff.h"
 #include "eigen3/Eigenvalues"
 
-Mat system_matrix(void (*F)(double *, double *, int),
-                  void (*B)(double *, double *, int), Vecr q, int d) {
+Mat system_matrix(void (*F)(double *, double *, double *, int),
+                  void (*B)(double *, double *, int), Vecr q, Matr dq, int d) {
 
   int V = q.size();
 
@@ -13,7 +13,7 @@ Mat system_matrix(void (*F)(double *, double *, int),
   if (F == NULL)
     M.setZero();
   else
-    df(M, F, q, d, Forward);
+    df(M, F, q, dq, d, false);
 
   if (B != NULL) {
 
@@ -25,27 +25,37 @@ Mat system_matrix(void (*F)(double *, double *, int),
   return M;
 }
 
-double max_abs_eig_spectra(Matr M) {
+double _max_abs_eig(Matr M) {
 
-  int n = M.rows();
+  int V = M.rows();
+
+  // TODO: work out when it is optimal to use Spectra
+  // (presumably for larger matrices)
+  if (V < 6)
+    return M.eigenvalues().array().abs().maxCoeff();
 
   CustomMatProd op(M);
-  SpectraEigSolver eigs(&op, 1, n);
+  SpectraEigSolver eigs(&op, 1, V);
   eigs.init();
   eigs.compute();
 
   return std::abs(eigs.eigenvalues()(0));
 }
 
-double max_abs_eigs(void (*F)(double *, double *, int),
-                    void (*B)(double *, double *, int), Vecr q, int d) {
+double max_abs_eigs(void (*F)(double *, double *, double *, int),
+                    void (*B)(double *, double *, int), Vecr q, Matr dq,
+                    int d) {
 
-  Mat jac = system_matrix(F, B, q, d);
+  Mat M = system_matrix(F, B, q, dq, d);
+  return _max_abs_eig(M);
+}
 
-  // TODO: work out when it is optimal to use Spectra
-  // (presumably for larger matrices)
-  if (jac.cols() > 5)
-    return max_abs_eig_spectra(jac);
-  else
-    return jac.eigenvalues().array().abs().maxCoeff();
+double max_abs_eigs_second_order(void (*F)(double *, double *, double *, int),
+                                 Vecr q, Matr dq, int d, int N, Vecr dX) {
+
+  int V = q.size();
+  Mat M2(V, V);
+
+  df(M2, F, q, dq, d, true);
+  return 2 * (N + 1) / dX(d) * _max_abs_eig(M2);
 }

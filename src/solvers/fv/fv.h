@@ -5,7 +5,7 @@
 
 class FVSolver {
 private:
-  void (*F)(double *, double *, int);
+  void (*F)(double *, double *, double *, int);
   void (*B)(double *, double *, int);
   void (*S)(double *, double *);
 
@@ -23,6 +23,8 @@ private:
   int Nd;
   int Nd_;
 
+  bool secondOrder;
+
   Vec NODES;
   Vec WGHTS;
 
@@ -34,9 +36,9 @@ private:
   void interfaces(Matr u, Matr qh, double dt);
 
 public:
-  FVSolver(void (*_F)(double *, double *, int),
+  FVSolver(void (*_F)(double *, double *, double *, int),
            void (*_B)(double *, double *, int), void (*_S)(double *, double *),
-           iVecr _nX, Vecr _dX, int _FLUX, int _N, int _V);
+           iVecr _nX, Vecr _dX, int _FLUX, int _N, int _V, bool _secondOrder);
 
   void apply(Matr u, Matr qh, double dt);
 };

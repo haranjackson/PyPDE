@@ -19,7 +19,7 @@ void initial_guess(Matr q, Matr w) {
     q.block(i * ROWS, 0, ROWS, COLS) = w;
 }
 
-DGSolver::DGSolver(void (*_F)(double *, double *, int),
+DGSolver::DGSolver(void (*_F)(double *, double *, double *, int),
                    void (*_B)(double *, double *, int),
                    void (*_S)(double *, double *), Vecr _dX, bool _STIFF,
                    int _N, int _V)
@@ -51,61 +51,65 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
 
   Mat ret(Nd * N, V);
 
-  Mat M(N * Nd, V);
-  Mat dM(Nd, V);
-
-  std::vector<Mat> f(ndim);
-  std::vector<Mat> df(ndim);
-
-  for (int d = 0; d < ndim; d++) {
-    f[d] = M;
-    df[d] = dM;
-  }
-
-  std::vector<Mat> dq = df;
+  Mat dq(Nd * ndim, V);
+  Mat f(Nd * ndim, V);
+  Mat df(Nd * ndim, V);
 
   Mat b(V, V);
-
-  if (F != NULL)
-    for (int d = 0; d < ndim; d++)
-      for (int ind = 0; ind < N * Nd; ind++)
-        F(f[d].row(ind).data(), q.row(ind).data(), d);
 
   iVec indsInner = iVec::Zero(ndim);
 
   for (int t = 0; t < N; t++) {
 
+    MatMap qt(q.data() + t * Nd * V, Nd, V, OuterStride(V));
+    MatMap rett(ret.data() + t * Nd * V, Nd, V, OuterStride(V));
+
     for (int d = 0; d < ndim; d++) {
+      MatMap dqMap(dq.data() + d * V, Nd, V, OuterStride(ndim * V));
+      derivs(dqMap, qt, d, DERVALS, ndim, dX);
+    }
 
-      derivs(dq[d], q.block(t * Nd, 0, Nd, V), d, DERVALS, ndim, dX);
+    if (F != NULL) {
 
-      if (F != NULL)
-        derivs(df[d], f[d].block(t * Nd, 0, Nd, V), d, DERVALS, ndim, dX);
+      for (int idx = 0; idx < Nd; idx++) {
+
+        int ind = idx * ndim;
+
+        for (int d = 0; d < ndim; d++)
+          F(f.row(ind + d).data(), qt.row(idx).data(),
+            dq.block(ind, 0, ndim, V).data(), d);
+      }
+
+      for (int d = 0; d < ndim; d++) {
+
+        MatMap dfMap(df.data() + d * V, Nd, V, OuterStride(ndim * V));
+        MatMap fMap(f.data() + d * V, Nd, V, OuterStride(ndim * V));
+
+        derivs(dfMap, fMap, d, DERVALS, ndim, dX);
+      }
     }
 
     for (int idx = 0; idx < Nd; idx++) {
 
-      int ind = t * Nd + idx;
-
       if (S == NULL)
-        ret.row(ind).setZero();
+        rett.row(idx).setZero();
       else
-        S(ret.row(ind).data(), q.row(ind).data());
+        S(rett.row(idx).data(), qt.row(idx).data());
 
       double c = WGHTS(t);
       for (int d = 0; d < ndim; d++) {
 
         if (B != NULL) {
-          B(b.data(), q.row(ind).data(), d);
-          ret.row(ind) -= b * dq[d].row(idx);
+          B(b.data(), qt.row(idx).data(), d);
+          rett.row(idx) -= b * dq.row(idx * ndim + d);
         }
 
         if (F != NULL)
-          ret.row(ind) -= df[d].row(idx);
+          rett.row(idx) -= df.row(idx * ndim + d);
 
         c *= WGHTS(indsInner(d));
       }
-      ret.row(ind) *= c;
+      rett.row(idx) *= c;
 
       update_inds(indsInner, N);
     }

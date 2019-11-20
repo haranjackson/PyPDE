@@ -1,7 +1,7 @@
 #include "../src/api.h"
 #include <cstddef>
 
-void F(double *ret, double *Q, int d) {
+void F(double *ret, double *Q, double *dQ, int d) {
 
   double r = Q[0];
   double ru = Q[1];
@@ -68,6 +68,6 @@ int main() {
   double _ret[ndt * nX * nY * V];
 
   ader_solver(F, B, S, true, false, false, _u, tf, _nX, ndim, _dX, CFL,
-              _boundaryTypes, STIFF, FLUX, N, V, ndt, _ret);
+              _boundaryTypes, STIFF, FLUX, N, V, ndt, false, _ret);
   return 0;
 }

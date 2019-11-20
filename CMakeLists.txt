@@ -29,6 +29,7 @@ set (SOURCES
     src/scipy/math/polynomials.cpp
 
     src/solvers/iterator.cpp
+    src/solvers/stepper.cpp
 
     src/solvers/dg/dg.cpp
     src/solvers/dg/dg_matrices.cpp

@@ -15,11 +15,12 @@ bool in_bounds(iVecr inds, iVecr bounds, int offset) {
   return true;
 }
 
-FVSolver::FVSolver(void (*_F)(double *, double *, int),
+FVSolver::FVSolver(void (*_F)(double *, double *, double *, int),
                    void (*_B)(double *, double *, int),
                    void (*_S)(double *, double *), iVecr _nX, Vecr _dX,
-                   int _FLUX, int _N, int _V)
-    : F(_F), B(_B), S(_S), nX(_nX), dX(_dX), FLUX(_FLUX), N(_N), V(_V) {
+                   int _FLUX, int _N, int _V, bool _secondOrder)
+    : F(_F), B(_B), S(_S), nX(_nX), dX(_dX), FLUX(_FLUX), N(_N), V(_V),
+      secondOrder(_secondOrder) {
 
   nX1 = nX;
   nX2 = nX;
@@ -94,13 +95,18 @@ void FVSolver::centers(Matr u, Matr qh, double dt) {
 
 void FVSolver::interfaces(Matr u, Matr qh, double dt) {
 
-  FluxGenerator fluxGenerator(F, B, NODES, WGHTS, V, FLUX);
+  FluxGenerator fluxGenerator(F, B, NODES, WGHTS, dX, V, FLUX, ndim);
 
   Vec f(V);
   Vec b = Vec::Zero(V);
 
   Mat q0(Nd_, V);
   Mat q1(Nd_, V);
+
+  Mat dqh0(Nd, V);
+  Mat dqh1(Nd, V);
+  Mat dq0(Nd_, V);
+  Mat dq1(Nd_, V);
 
   iVec indsOuter = iVec::Zero(ndim); // runs over all cells in ub
   iVec indsInner = iVec::Zero(ndim - 1);
@@ -133,9 +139,18 @@ void FVSolver::interfaces(Matr u, Matr qh, double dt) {
         endpts(q0, qh0, d, 1, ENDVALS, ndim);
         endpts(q1, qh1, d, 0, ENDVALS, ndim);
 
+        // TODO: calculate derivatives of qh beforehand
+        // - they are currently calculated twice
+        derivs(dqh0, qh0, d, DERVALS, ndim, dX);
+        derivs(dqh1, qh1, d, DERVALS, ndim, dX);
+
+        endpts(dq0, dqh0, d, 1, ENDVALS, ndim);
+        endpts(dq1, dqh1, d, 0, ENDVALS, ndim);
+
         for (int idx = 0; idx < Nd_; idx++) {
 
-          fluxGenerator.flux(f, q0.row(idx), q1.row(idx), d);
+          fluxGenerator.flux(f, q0.row(idx), q1.row(idx), dq0.row(idx),
+                             dq1.row(idx), d, secondOrder);
 
           if (B != NULL)
             fluxGenerator.Bint(b, q0.row(idx), q1.row(idx), d);

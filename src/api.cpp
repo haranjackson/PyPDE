@@ -2,13 +2,13 @@
 #include "solvers/weno/weno.h"
 #include "types.h"
 
-extern "C" void ader_solver(void (*F)(double *, double *, int),
+extern "C" void ader_solver(void (*F)(double *, double *, double *, int),
                             void (*B)(double *, double *, int),
                             void (*S)(double *, double *), bool useF, bool useB,
                             bool useS, double *_u, double tf, int *_nX,
                             int ndim, double *_dX, double CFL,
                             int *_boundaryTypes, bool STIFF, int FLUX, int N,
-                            int V, int ndt, double *_ret) {
+                            int V, int ndt, bool secondOrder, double *_ret) {
 
   iVecMap nX(_nX, ndim);
   VecMap dX(_dX, ndim);
@@ -26,7 +26,7 @@ extern "C" void ader_solver(void (*F)(double *, double *, int),
     S = NULL;
 
   iterator(F, B, S, u, tf, nX, dX, CFL, boundaryTypes, STIFF, FLUX, N, ndt,
-           ret);
+           secondOrder, ret);
 }
 
 extern "C" void weno_solver(double *ret, double *_u, int *_nX, int ndim, int N,

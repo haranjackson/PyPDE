@@ -4,7 +4,7 @@ from ctypes import POINTER, c_bool, c_double, c_int, c_void_p
 from numba.types import CPointer, double, intc, void
 from numpy import array, dtype, int32
 
-F_Csig = void(CPointer(double), CPointer(double), intc)
+F_Csig = void(CPointer(double), CPointer(double), CPointer(double), intc)
 B_Csig = void(CPointer(double), CPointer(double), intc)
 S_Csig = void(CPointer(double), CPointer(double))
 
@@ -12,12 +12,12 @@ FLUXES = {'rusanov': 0, 'roe': 1, 'osher': 2}
 
 BOUNDARIES = {'transitive': 0, 'periodic': 1}
 
-SOLVER_ARGTYPES = [
+ADER_SOLVER_ARGTYPES = [
     c_void_p, c_void_p, c_void_p, c_bool, c_bool, c_bool,
     POINTER(c_double), c_double,
     POINTER(c_int), c_int,
     POINTER(c_double), c_double,
-    POINTER(c_int), c_bool, c_int, c_int, c_int, c_int,
+    POINTER(c_int), c_bool, c_int, c_int, c_int, c_int, c_bool,
     POINTER(c_double)
 ]
 
