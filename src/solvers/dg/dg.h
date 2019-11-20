@@ -36,6 +36,10 @@ private:
 
   void initial_condition(Matr Ww, Matr w);
 
+  Mat stiff_solve(Matr q0, Matr Ww, double dt);
+
+  Mat nonstiff_solve(Matr q0, Matr Ww, double dt);
+
 public:
   DGSolver(void (*_F)(double *, double *, int),
            void (*_B)(double *, double *, int), void (*_S)(double *, double *),

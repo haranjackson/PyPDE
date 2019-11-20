@@ -66,14 +66,12 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
 
   Mat b(V, V);
 
-  iVec indsInner = iVec::Zero(ndim);
-
-  if (F != NULL) {
-    for (int ind = 0; ind < N * Nd; ind++)
-      for (int d = 0; d < ndim; d++) {
+  if (F != NULL)
+    for (int d = 0; d < ndim; d++)
+      for (int ind = 0; ind < N * Nd; ind++)
         F(f[d].row(ind).data(), q.row(ind).data(), d);
-      }
-  }
+
+  iVec indsInner = iVec::Zero(ndim);
 
   for (int t = 0; t < N; t++) {
 
@@ -81,9 +79,8 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
 
       derivs(dq[d], q.block(t * Nd, 0, Nd, V), d, DERVALS, ndim, dX);
 
-      if (F != NULL) {
+      if (F != NULL)
         derivs(df[d], f[d].block(t * Nd, 0, Nd, V), d, DERVALS, ndim, dX);
-      }
     }
 
     for (int idx = 0; idx < Nd; idx++) {
@@ -113,39 +110,36 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
       update_inds(indsInner, N);
     }
   }
-
   ret *= dt;
   ret += Ww;
   return ret;
 }
 
-Vec DGSolver::obj(Vecr q, Matr Ww, double dt) {
+Vec DGSolver::obj(Vecr qv, Matr Ww, double dt) {
 
-  MatMap qmat(q.data(), N * Nd, V, OuterStride(V));
-  Mat tmp = rhs(qmat, Ww, dt);
+  MatMap q(qv.data(), N * Nd, V, OuterStride(V));
+  Mat tmp = rhs(q, Ww, dt);
 
   iVec indsInner = iVec::Zero(ndim);
 
   for (int t = 0; t < N; t++)
     for (int k = 0; k < N; k++) {
 
-      int idx = 0;
       int indt = t * Nd;
       int indk = k * Nd;
-      while (idx < Nd) {
+
+      for (int idx = 0; idx < Nd; idx++) {
 
         double c = DG_MAT(t, k);
         for (int d = 0; d < ndim; d++)
           c *= WGHTS(indsInner(d));
 
-        tmp.row(indt + idx) -= c * qmat.row(indk + idx);
+        tmp.row(indt + idx) -= c * q.row(indk + idx);
 
         update_inds(indsInner, N);
-        idx++;
       }
     }
-
-  VecMap ret(tmp.data(), tmp.rows() * tmp.cols());
+  VecMap ret(tmp.data(), tmp.size());
   return ret;
 }
 
@@ -166,6 +160,37 @@ void DGSolver::initial_condition(Matr Ww, Matr w) {
     }
 }
 
+Mat DGSolver::stiff_solve(Matr q0, Matr Ww, double dt) {
+
+  using std::placeholders::_1;
+  VecFunc obj_bound = std::bind(&DGSolver::obj, this, _1, Ww, dt);
+
+  VecMap q0v(q0.data(), q0.rows() * q0.cols());
+
+  Vec res = nonlin_solve(obj_bound, q0v, DG_TOL);
+
+  Mat resMat(MatMap(res.data(), N * Nd, V, OuterStride(V)));
+
+  return resMat;
+}
+
+Mat DGSolver::nonstiff_solve(Matr q0, Matr Ww, double dt) {
+
+  Mat q1(N * Nd, V);
+  for (int count = 0; count < DG_IT; count++) {
+
+    q1 = DG_U.solve(rhs(q0, Ww, dt));
+
+    aMat absDiff = (q1 - q0).array().abs();
+
+    if ((absDiff > DG_TOL * (1. + q0.array().abs())).any())
+      q0 = q1;
+    else
+      break;
+  }
+  return q1;
+}
+
 Mat DGSolver::predictor(Matr wh, double dt) {
 
   Mat qh(wh.rows() * N, V);
@@ -180,40 +205,10 @@ Mat DGSolver::predictor(Matr wh, double dt) {
     initial_condition(Ww, wi);
     initial_guess(q0, wi);
 
-    if (STIFF) {
-
-      using std::placeholders::_1;
-      VecFunc obj_bound = std::bind(&DGSolver::obj, this, _1, Ww, dt);
-
-      VecMap q0v(q0.data(), q0.rows() * q0.cols());
-
-      Vec res = nonlin_solve(obj_bound, q0v, DG_TOL);
-
-      Mat resMat(MatMap(res.data(), N * Nd, V, OuterStride(V)));
-
-      qh.block(ind * N, 0, N * Nd, V) = resMat;
-
-    } else {
-
-      bool failed = true;
-      for (int count = 0; count < DG_IT; count++) {
-
-        Mat q1 = DG_U.solve(rhs(q0, Ww, dt));
-
-        aMat absDiff = (q1 - q0).array().abs();
-
-        if ((absDiff > DG_TOL * (1. + q0.array().abs())).any()) {
-          q0 = q1;
-          continue;
-        } else {
-          qh.block(ind * N, 0, N * Nd, V) = q1;
-          failed = false;
-          break;
-        }
-      }
-      if (failed)
-        std::cout << "DG iteration failed on ind=" << ind << "\n";
-    }
+    if (STIFF)
+      qh.block(ind * N, 0, N * Nd, V) = stiff_solve(q0, Ww, dt);
+    else
+      qh.block(ind * N, 0, N * Nd, V) = nonstiff_solve(q0, Ww, dt);
   }
   return qh;
 }

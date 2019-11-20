@@ -64,8 +64,7 @@ void FVSolver::centers(Matr u, Matr qh, double dt) {
       for (int d = 0; d < ndim; d++)
         derivs(dq[d], qhi, d, DERVALS, ndim, dX);
 
-      int idx = 0;
-      while (idx < Nd) {
+      for (int idx = 0; idx < Nd; idx++) {
 
         if (S == NULL)
           s.setZero();
@@ -86,7 +85,6 @@ void FVSolver::centers(Matr u, Matr qh, double dt) {
         u.row(uCell) += tmp * s;
 
         update_inds(indsInner, N);
-        idx++;
       }
     }
 
