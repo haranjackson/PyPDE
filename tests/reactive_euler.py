@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-from numba import jit
+from numba import njit
 from numpy import array, concatenate, inner, zeros
 
 from pypde import ader_solver
 
 
-@jit
+@njit
 def internal_energy(E, v, λ):
 
     Qc = 1
@@ -35,7 +35,7 @@ def F_reactive_euler(Q, d):
     return ret
 
 
-@jit
+@njit
 def reaction_rate(E, v, λ):
     """ Returns the rate of reaction according to discrete ignition temperature
         reaction kinetics
@@ -78,18 +78,18 @@ def test_reactive_euler():
 
     ρL = 1.4
     pL = 1
-    vL = zeros(3)
+    vL = [0, 0, 0]
     λL = 0
     EL = energy(ρL, pL, vL, λL)
 
     ρR = 0.887565
     pR = 0.191709
-    vR = array([-0.57735, 0, 0])
+    vR = [-0.57735, 0, 0]
     λR = 1
     ER = energy(ρR, pR, vR, λR)
 
-    QL = ρL * concatenate([array([1, EL]), vL, array([λL])])
-    QR = ρR * concatenate([array([1, ER]), vR, array([λR])])
+    QL = ρL * array([1, EL] + vL + [λL])
+    QR = ρR * array([1, ER] + vR + [λR])
 
     u = zeros([nx, 6])
     for i in range(nx):

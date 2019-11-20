@@ -1,18 +1,10 @@
+import inspect
 import sys
-from ctypes import POINTER, c_bool, c_double, c_int, c_void_p
+from ctypes import CDLL, POINTER, c_bool, c_double, c_int, c_void_p
 
-from numba.types import CPointer, double, intc, void
-from numpy import array, dtype, int32
+from numpy import array
 
-F_Csig = void(CPointer(double), CPointer(double), CPointer(double), intc)
-B_Csig = void(CPointer(double), CPointer(double), intc)
-S_Csig = void(CPointer(double), CPointer(double))
-
-FLUXES = {'rusanov': 0, 'roe': 1, 'osher': 2}
-
-BOUNDARIES = {'transitive': 0, 'periodic': 1}
-
-ADER_SOLVER_ARGTYPES = [
+ADER_ARGTYPES = [
     c_void_p, c_void_p, c_void_p, c_bool, c_bool, c_bool,
     POINTER(c_double), c_double,
     POINTER(c_int), c_int,
@@ -21,12 +13,18 @@ ADER_SOLVER_ARGTYPES = [
     POINTER(c_double)
 ]
 
+BOUNDARIES = {'transitive': 0, 'periodic': 1}
+
+
+def nargs(func):
+    return len(inspect.signature(func).parameters)
+
 
 def c_ptr(arr):
 
-    if arr.dtype == dtype('int32'):
+    if arr.dtype == 'int32':
         ptr = POINTER(c_int)
-    elif arr.dtype == dtype('float64'):
+    elif arr.dtype == 'float64':
         ptr = POINTER(c_double)
     else:
         print('invalid array type')
@@ -63,4 +61,15 @@ def parse_boundary_types(boundaryTypes, ndim):
         print(errMsg)
         sys.exit(1)
 
-    return array(ret, dtype=int32)
+    return array(ret, dtype='int32')
+
+
+def create_solver():
+
+    libader = CDLL('build/libader.dylib')
+    solver = libader.ader_solver
+
+    solver.argtypes = ADER_ARGTYPES
+    solver.restype = None
+
+    return solver

@@ -4,7 +4,7 @@ from numpy import array, zeros
 from pypde import ader_solver
 
 
-def F_euler(Q, d):
+def F_euler(Q):
 
     γ = 1.4
 
