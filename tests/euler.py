@@ -24,9 +24,9 @@ def energy(ρ, p, v):
     return p / ((γ - 1) * ρ) + v**2 / 2
 
 
-def _test_euler():
+def test_euler():
 
-    nx = 100
+    nx = 200
 
     ρL = 1
     pL = 1
@@ -46,13 +46,10 @@ def _test_euler():
         else:
             u[i] = QR
 
-    tf = 0.005
+    tf = 0.2
     L = [1.]
 
-    return u, tf, L
+    ret = ader_solver(u, tf, L, F=F_euler, STIFF=False, CFL=0.6)
 
-
-if __name__ == '__main__':
-
-    u, tf, L = _test_euler()
-    ret = ader_solver(u, tf, L, F=F_euler, STIFF=False, CFL=0.001)
+    plt.plot(ret[-1, :, 0])
+    plt.show()

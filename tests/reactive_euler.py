@@ -72,9 +72,9 @@ def energy(ρ, p, v, λ):
     return p / ((γ - 1) * ρ) + inner(v, v) / 2 + Qc * (λ - 1)
 
 
-def _test_reactive_euler():
+def test_reactive_euler():
 
-    nx = 100
+    nx = 400
 
     ρL = 1.4
     pL = 1
@@ -101,18 +101,15 @@ def _test_reactive_euler():
     tf = 0.5
     L = [1.]
 
-    return u, tf, L
+    ret = ader_solver(u,
+                      tf,
+                      L,
+                      F=F_reactive_euler,
+                      S=S_reactive_euler,
+                      STIFF=False,
+                      CFL=0.6,
+                      flux='roe',
+                      N=3)
 
-
-if __name__ == '__main__':
-
-    u, tf, L = _test_reactive_euler()
-    tf = 1
-    # ader_solver(u, tf, L, F=F_reactive_euler, S=S_reactive_euler, STIFF=False)
-    ader_solver(u,
-                tf,
-                L,
-                F=F_reactive_euler,
-                S=S_reactive_euler,
-                STIFF=False,
-                CFL=0.6)
+    plt.plot(ret[-1, :, 0])
+    plt.show()
