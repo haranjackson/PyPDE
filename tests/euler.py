@@ -1,104 +1,52 @@
 import matplotlib.pyplot as plt
-from numba import jit
-from numpy import array, concatenate, inner, zeros
+from numpy import array, zeros
 
 from pypde import ader_solver
 
 
-@jit
-def internal_energy(E, v, λ):
-
-    Qc = 1
-
-    return E - (v[0]**2 + v[1]**2 + v[2]**2) / 2 - Qc * (λ - 1)
-
-
-def F_reactive_euler(Q, d):
+def F_euler(Q, d):
 
     γ = 1.4
 
     ρ = Q[0]
     E = Q[1] / ρ
-    v = Q[2:5] / ρ
-    λ = Q[5] / ρ
+    v = Q[2] / ρ
 
-    # internal energy
-    e = internal_energy(E, v, λ)
-
-    # pressure
+    e = E - v**2 / 2
     p = (γ - 1) * ρ * e
 
-    ret = v[d] * Q
-    ret[1] += p * v[d]
-    ret[2 + d] += p
-
-    return ret
+    return array([ρ * v, ρ * E * v + p * v, ρ * v**2 + p])
 
 
-@jit
-def reaction_rate(E, v, λ):
-    """ Returns the rate of reaction according to discrete ignition temperature
-        reaction kinetics
-    """
+def energy(ρ, p, v):
 
-    cv = 2.5
-    Ti = 0.25
-    K0 = 250
-
-    e = internal_energy(E, v, λ)
-    T = e / cv
-    return K0 if T > Ti else 0
-
-
-def S_reactive_euler(Q):
-
-    ret = zeros(6)
-
-    ρ = Q[0]
-    E = Q[1] / ρ
-    v = Q[2:5] / ρ
-    λ = Q[5] / ρ
-
-    ret[5] = -ρ * λ * reaction_rate(E, v, λ)
-
-    return ret
-
-
-def energy(ρ, p, v, λ):
-
-    Qc = 1
     γ = 1.4
-
-    return p / ((γ - 1) * ρ) + inner(v, v) / 2 + Qc * (λ - 1)
+    return p / ((γ - 1) * ρ) + v**2 / 2
 
 
 def _test_euler():
 
     nx = 100
 
-    ρL = 1.4
+    ρL = 1
     pL = 1
-    vL = zeros(3)
-    λL = 0
-    EL = energy(ρL, pL, vL, λL)
+    vL = 0
 
-    ρR = 0.887565
-    pR = 0.191709
-    vR = array([-0.57735, 0, 0])
-    λR = 1
-    ER = energy(ρR, pR, vR, λR)
+    ρR = 0.125
+    pR = 0.1
+    vR = 0
 
-    QL = ρL * concatenate([array([1, EL]), vL, array([λL])])
-    QR = ρR * concatenate([array([1, ER]), vR, array([λR])])
+    QL = ρL * array([1., energy(ρL, pL, vL), vL])
+    QR = ρR * array([1., energy(ρR, pR, vR), vR])
 
-    u = zeros([nx, 6])
+    u = zeros([nx, 3])
     for i in range(nx):
-        if i / nx < 0.25:
+        if i / nx < 0.5:
             u[i] = QL
         else:
             u[i] = QR
 
-    tf = 0.5
+    tf = 0.005
     L = [1.]
 
     return u, tf, L
@@ -107,5 +55,4 @@ def _test_euler():
 if __name__ == '__main__':
 
     u, tf, L = _test_euler()
-    tf = 1
-    ader_solver(u, tf, L, F=F_reactive_euler, S=S_reactive_euler, STIFF=False)
+    ret = ader_solver(u, tf, L, F=F_euler, STIFF=False, CFL=0.001)
