@@ -153,7 +153,7 @@ def viscous_shock_test(nx=200):
     assert (TEST == 'viscous_shock')
 
     tf = 0.2
-    nx = 100
+    nx = 200
 
     x = arange(-0.5, 0.5, 1 / nx)
     ρ = zeros(nx)
