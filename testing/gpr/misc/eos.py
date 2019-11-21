@@ -27,7 +27,6 @@ def E_2A(A):
 def E_2J(J):
     """ Returns the mesoscale energy dependent on the thermal impulse
     """
-
     return cα2 / 2 * dot(J, J)
 
 

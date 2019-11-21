@@ -7,9 +7,6 @@ const int RUSANOV = 0;
 const int ROE = 1;
 const int OSHER = 2;
 
-Vec Bint(void (*B)(double *, double *, int), Vecr qL, Vecr qR, int d,
-         Vecr NODES, Vecr WGHTS);
-
 class FluxGenerator {
 private:
   void (*F)(double *, double *, double *, int);

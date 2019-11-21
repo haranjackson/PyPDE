@@ -97,7 +97,7 @@ void FVSolver::interfaces(Matr u, Matr qh, double dt) {
 
   FluxGenerator fluxGenerator(F, B, NODES, WGHTS, dX, V, FLUX, ndim);
 
-  Vec f(V);
+  Vec f = Vec::Zero(V);
   Vec b = Vec::Zero(V);
 
   Mat q0(Nd_, V);
@@ -149,8 +149,9 @@ void FVSolver::interfaces(Matr u, Matr qh, double dt) {
 
         for (int idx = 0; idx < Nd_; idx++) {
 
-          fluxGenerator.flux(f, q0.row(idx), q1.row(idx), dq0.row(idx),
-                             dq1.row(idx), d, secondOrder);
+          if (F != NULL)
+            fluxGenerator.flux(f, q0.row(idx), q1.row(idx), dq0.row(idx),
+                               dq1.row(idx), d, secondOrder);
 
           if (B != NULL)
             fluxGenerator.Bint(b, q0.row(idx), q1.row(idx), d);

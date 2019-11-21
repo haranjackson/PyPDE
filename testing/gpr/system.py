@@ -1,6 +1,5 @@
 from numba import njit
-from numpy import dot, sqrt, zeros
-from numpy.linalg import eigvals
+from numpy import dot, zeros
 
 from testing.gpr.misc.sources import theta1inv, theta2inv
 from testing.gpr.misc.state import (dEdA, dEdJ, heat_flux, pressure, sigma,

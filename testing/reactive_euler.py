@@ -113,3 +113,5 @@ def test_reactive_euler():
 
     plt.plot(ret[-1, :, 0])
     plt.show()
+
+    return ret

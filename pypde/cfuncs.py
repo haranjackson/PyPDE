@@ -15,7 +15,7 @@ def generate_signatures(nFargs, nBargs):
     elif nFargs == 2:
         Fsig = 'double[:](double[:], intc)'
     elif nFargs == 3:
-        Fsig = 'double[:](double[:], double[:], intc)'
+        Fsig = 'double[:](double[:], double[:,:], intc)'
 
     if nBargs == 1:
         Bsig = 'double[:,:](double[:])'

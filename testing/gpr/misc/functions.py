@@ -19,7 +19,7 @@ def sigma_norm(σ):
 def dev(G):
     """ Returns the deviator of G
     """
-    return G - (G[0] + G[1] + G[2]) / 3 * eye(3)
+    return G - (G[0, 0] + G[1, 1] + G[2, 2]) / 3 * eye(3)
 
 
 @njit

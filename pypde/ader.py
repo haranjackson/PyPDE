@@ -40,6 +40,8 @@ def ader_solver(u,
 
     secondOrder = nargs(F) == 3
 
+    print('compiling functions...')
+
     _F, _B, _S = generate_cfuncs(F, B, S, ndim, V)
 
     solver = create_solver()
