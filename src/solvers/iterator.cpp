@@ -30,32 +30,20 @@ void iterator(void (*F)(double *, double *, double *, int),
 
   while (t < tf) {
 
-    std::cout << 1;
-
     Mat ub = boundaries(u, nX, boundaryTypes, N);
-
-    std::cout << 2;
 
     Mat wh = wenoSolver.reconstruction(ub);
 
-    std::cout << 3;
-
     double dt = timeStepper.step(wh, t, count);
-
-    std::cout << 4;
 
     Mat qh = dgSolver.predictor(wh, dt);
 
-    std::cout << 5;
-
     fvSolver.apply(u, qh, dt);
-
-    std::cout << 6;
 
     t += dt;
     count += 1;
 
-    std::cout << "t=" << t << "\n\n";
+    std::cout << "t = " << t << "\n";
 
     if (t >= double(pushCount + 1) / double(ndt) * tf) {
       ret.row(pushCount) = VecMap(u.data(), u.size());
