@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
-from numpy import arange, array, exp, eye, linspace, sqrt, zeros
-from scipy.optimize import brentq
-from scipy.special import erf
+from numpy import arange, array, eye, zeros
 
 from pypde import ader_solver
+from testing.exact import viscous_shock_exact
 from testing.gpr.misc.eos import total_energy
-from testing.gpr.params import TEST, γ, μ
+from testing.gpr.params import TEST, γ
 from testing.gpr.system import B_gpr, F_gpr, S_gpr
 
 
@@ -42,15 +41,6 @@ def riemann_IC(n, ρL, pL, vL, ρR, pR, vR):
             u[i] = QR
 
     return u
-
-
-def stokes_exact(n=100, v0=0.1, t=1):
-    """ Returns the exact solution of the y-velocity in the x-axis for Stokes'
-        First Problem
-    """
-    dx = 1 / n
-    x = linspace(-0.5 + dx / 2, 0.5 - dx / 2, num=n)
-    return v0 * erf(x / (2 * sqrt(μ * t)))
 
 
 def stokes_test(n=100, v0=0.1):
@@ -114,36 +104,6 @@ def heat_conduction_test(n=200):
                       CFL=0.9)
 
     return ret
-
-
-def viscous_shock_exact(x, Ms=2):
-    """ Returns the density, pressure, and velocity of the viscous shock
-        (Mach number Ms) at x
-    """
-    ρ0 = 1
-    p0 = 1 / γ
-
-    L = 0.3
-
-    x = min(x, L)
-    x = max(x, -L)
-
-    c0 = sqrt(γ * p0 / ρ0)
-    a = 2 / (Ms**2 * (γ + 1)) + (γ - 1) / (γ + 1)
-    Re = ρ0 * c0 * Ms / μ
-    c1 = ((1 - a) / 2)**(1 - a)
-    c2 = 3 / 4 * Re * (Ms**2 - 1) / (γ * Ms**2)
-
-    def f(z):
-        return (1 - z) / (z - a)**a - c1 * exp(c2 * -x)
-
-    vbar = brentq(f, a + 1e-16, 1)
-    p = p0 / vbar * (1 + (γ - 1) / 2 * Ms**2 * (1 - vbar**2))
-    ρ = ρ0 / vbar
-    v = Ms * c0 * vbar
-    v = Ms * c0 - v  # Shock travelling into fluid at rest
-
-    return ρ, p, v
 
 
 def viscous_shock_test(nx=200):

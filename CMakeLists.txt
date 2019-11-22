@@ -6,8 +6,6 @@ include_directories(include)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
-# -march=native seems slower sometimes
-# -ffast-math causes nans in some tests
 
 set(RUN_TEST 0)
 
@@ -45,6 +43,7 @@ if (RUN_TEST)
     SET(SOURCES ${SOURCES} "tests/test.cpp")
     add_executable(ader_test ${SOURCES})
 else()
+    # -march=native seems slower sometimes
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -DNDEBUG -fno-math-errno")
     add_library(ader SHARED ${SOURCES})
     set_target_properties(ader PROPERTIES VERSION ${PROJECT_VERSION})
