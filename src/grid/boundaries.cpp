@@ -29,10 +29,10 @@ Mat boundaries(Matr u, iVecr nX, iVecr boundaryTypes, int N) {
   int ndim = nX.size();
   int V = u.size() / nX.prod();
 
-  iVec nX_2N = nX;
-  nX_2N.array() += 2 * N;
+  iVec nX2N = nX;
+  nX2N.array() += 2 * N;
 
-  int ncell = nX_2N.prod();
+  int ncell = nX2N.prod();
 
   Mat ub(ncell, V);
 
@@ -46,7 +46,7 @@ Mat boundaries(Matr u, iVecr nX, iVecr boundaryTypes, int N) {
 
     ub.row(idx) = u.row(index(tmpInds, nX, 0));
 
-    update_inds(inds, nX_2N);
+    update_inds(inds, nX2N);
   }
 
   return ub;

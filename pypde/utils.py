@@ -40,14 +40,14 @@ def parse_boundary_types(boundaryTypes, ndim):
 
     if isinstance(boundaryTypes, str):
         try:
-            ret = [BOUNDARIES[boundaryTypes]]
+            ret = [BOUNDARIES[boundaryTypes]] * ndim
         except KeyError:
             print(errMsg)
             sys.exit(1)
 
     elif isinstance(boundaryTypes, list):
 
-        if not len(boundaryTypes) == ndim:
+        if len(boundaryTypes) != ndim:
             print(errMsg)
             sys.exit(1)
 
