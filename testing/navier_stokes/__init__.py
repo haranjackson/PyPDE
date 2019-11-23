@@ -21,7 +21,7 @@ def Cvec(ρ, p, v):
     return Q
 
 
-def viscous_shock_test(nx=200):
+def viscous_shock_test():
     """ 10.1016/j.jcp.2016.02.015
         4.13 Viscous shock profile
     """

@@ -19,11 +19,16 @@ def F_navier_stokes(Q, dQ, d):
 
     ret = zeros(5)
 
-    dv = dQ[:, 2:5]
-
     ρ = Q[0]
     E = Q[1] / ρ
     v = Q[2:5] / ρ
+
+    dρ_dx = dQ[0, 0]
+    dρv_dx = dQ[0, 2:5]
+    dv_dx = (dρv_dx - dρ_dx * v) / ρ
+
+    dv = zeros((3, 3))
+    dv[0] = dv_dx
 
     p = pressure(ρ, E, v)
     σ = sigma(dv)
