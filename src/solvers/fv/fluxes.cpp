@@ -20,23 +20,23 @@ FluxGenerator::FluxGenerator(void (*_F)(double *, double *, double *, int),
 Vec FluxGenerator::D_OSH(Vecr qL, Vecr qR, Matr dqL, Matr dqR, int d) {
   // Returns the Osher flux component, in the dth direction
 
-  Vec Δq = qL - qR;
-  Mat Δdq = dqL - dqR;
+  Vec Dq = qL - qR;
+  Mat Ddq = dqL - dqR;
 
-  cVec Δqc = cVec(Δq);
+  cVec Dqc = cVec(Dq);
 
   cVec b(V);
   cVec ret = cVec::Zero(V);
 
   for (int i = 0; i < N; i++) {
 
-    q = qR + NODES(i) * Δq;
-    dq = dqR + NODES(i) * Δdq;
+    q = qR + NODES(i) * Dq;
+    dq = dqR + NODES(i) * Ddq;
 
     M = system_matrix(F, B, q, dq, d);
     ES.compute(M);
 
-    b = ES.eigenvectors().colPivHouseholderQr().solve(Δqc).array() *
+    b = ES.eigenvectors().colPivHouseholderQr().solve(Dqc).array() *
         ES.eigenvalues().array().abs();
     ret += WGHTS(i) * (ES.eigenvectors() * b);
   }
@@ -47,23 +47,23 @@ Vec FluxGenerator::D_OSH(Vecr qL, Vecr qR, Matr dqL, Matr dqR, int d) {
 Vec FluxGenerator::D_ROE(Vecr qL, Vecr qR, Matr dqL, Matr dqR, int d) {
   // Returns the Osher flux component, in the dth direction
 
-  Vec Δq = qL - qR;
-  Mat Δdq = dqL - dqR;
+  Vec Dq = qL - qR;
+  Mat Ddq = dqL - dqR;
 
-  cVec Δqc = cVec(Δq);
+  cVec Dqc = cVec(Dq);
 
   M.setZero();
 
   for (int i = 0; i < N; i++) {
 
-    q = qR + NODES(i) * Δq;
-    dq = dqR + NODES(i) * Δdq;
+    q = qR + NODES(i) * Dq;
+    dq = dqR + NODES(i) * Ddq;
 
     M += WGHTS(i) * system_matrix(F, B, q, dq, d);
   }
   ES.compute(M);
 
-  cVec b = ES.eigenvectors().colPivHouseholderQr().solve(Δqc).array() *
+  cVec b = ES.eigenvectors().colPivHouseholderQr().solve(Dqc).array() *
            ES.eigenvalues().array().abs();
 
   return (ES.eigenvectors() * b).real();
@@ -103,15 +103,15 @@ void FluxGenerator::flux(Vecr ret, Vecr qL, Vecr qR, Matr dqL, Matr dqR, int d,
 void FluxGenerator::Bint(Vecr ret, Vecr qL, Vecr qR, int d) {
   // Returns the jump matrix for B, in the dth direction
 
-  Vec Δq = qR - qL;
+  Vec Dq = qR - qL;
 
   Mat b(V, V);
   M.setZero();
 
   for (int i = 0; i < N; i++) {
-    q = qL + NODES(i) * Δq;
+    q = qL + NODES(i) * Dq;
     B(b.data(), q.data(), d);
     M += WGHTS(i) * b;
   }
-  ret = M * Δq;
+  ret = M * Dq;
 }

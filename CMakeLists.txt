@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.5.1)
-set(CMAKE_CXX_STANDARD 17)
-project(ADER_CPP VERSION 1.0.0 DESCRIPTION "A shared library for solving partial differential equations with the ADER method")
+set(CMAKE_CXX_STANDARD 11)
+project(ADER_CPP VERSION 1.0.0)
 
 include_directories(include)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
-set(RUN_TEST 0)
+set(RUN_TEST 1)
 
 set (SOURCES
     src/api.cpp
