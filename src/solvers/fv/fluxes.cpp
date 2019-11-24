@@ -80,19 +80,18 @@ Vec FluxGenerator::D_RUS(Vecr qL, Vecr qR, Matr dqL, Matr dqR, int d) {
 void FluxGenerator::flux(Vecr ret, Vecr qL, Vecr qR, Matr dqL, Matr dqR, int d,
                          bool secondOrder) {
 
+  if (FLUX == RUSANOV)
+    ret = D_RUS(qL, qR, dqL, dqR, d);
+
+  if (FLUX == ROE)
+    ret = D_ROE(qL, qR, dqL, dqR, d);
+
+  if (FLUX == OSHER)
+    ret = D_OSH(qL, qR, dqL, dqR, d);
+
   F(fL.data(), qL.data(), dqL.data(), d);
   F(fR.data(), qR.data(), dqR.data(), d);
-
-  switch (FLUX) {
-  case RUSANOV:
-    ret = D_RUS(qL, qR, dqL, dqR, d) + fL + fR;
-  case ROE:
-    ret = D_ROE(qL, qR, dqL, dqR, d) + fL + fR;
-  case OSHER:
-    ret = D_OSH(qL, qR, dqL, dqR, d) + fL + fR;
-  default:
-    break;
-  }
+  ret += fL + fR;
 
   if (secondOrder) {
     double max1 = max_abs_eigs_second_order(F, qL, dqL, d, N, dX);
