@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-from numpy import array, zeros
+from mpl_toolkits.mplot3d import Axes3D
+from numpy import arange, array, meshgrid, zeros
 
 from pypde import ader_solver
 
@@ -24,7 +25,7 @@ def energy(ρ, p, v):
     return p / ((γ - 1) * ρ) + v**2 / 2
 
 
-def test_euler():
+def test_euler(multiDimensional=True):
 
     nx = 200
 
@@ -47,9 +48,36 @@ def test_euler():
             u[i] = QR
 
     tf = 0.2
-    L = [1.]
 
-    ret = ader_solver(u, tf, L, F=F_euler, STIFF=False, CFL=0.6)
+    if multiDimensional:
+        u_ = u.copy()
+        u = zeros([nx, 5, 3])
+        for i in range(5):
+            u[:, i] = u_
+        L = [1., .2]
+        boundaryTypes = ['transitive', 'periodic']
+    else:
+        L = [1.]
+        boundaryTypes = ['transitive']
 
-    plt.plot(ret[-1, :, 0])
+    ret = ader_solver(u,
+                      tf,
+                      L,
+                      F=F_euler,
+                      STIFF=False,
+                      boundaryTypes=boundaryTypes)
+
+    if multiDimensional:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        x = arange(0, L[0], L[0] / nx)
+        y = arange(0, L[1], L[1] / 5)
+        X, Y = meshgrid(y, x)
+        Z = ret[-1, :, :, 0]
+        ax.plot_surface(X, Y, Z)
+    else:
+        plt.plot(ret[-1, :, 0])
+
     plt.show()
+
+    return ret
