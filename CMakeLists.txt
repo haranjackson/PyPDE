@@ -40,7 +40,7 @@ set (SOURCES
 
 if (RUN_TEST)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fstandalone-debug")
-    SET(SOURCES ${SOURCES} "tests/test.cpp")
+    SET(SOURCES ${SOURCES} "testing/test.cpp")
     add_executable(ader_test ${SOURCES})
 else()
     # -march=native seems slower sometimes
