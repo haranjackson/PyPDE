@@ -56,6 +56,7 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
   Mat df(Nd * ndim, V);
 
   Mat b(V, V);
+  Mat tmpDeriv(Nd, V);
 
   iVec indsInner = iVec::Zero(ndim);
 
@@ -65,8 +66,12 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
     MatMap rett(ret.data() + t * Nd * V, Nd, V, OuterStride(V));
 
     for (int d = 0; d < ndim; d++) {
+
+      // first 2 args of derivs must be contiguous
+      derivs(tmpDeriv, qt, d, DERVALS, ndim, dX);
+
       MatMap dqMap(dq.data() + d * V, Nd, V, OuterStride(ndim * V));
-      derivs(dqMap, qt, d, DERVALS, ndim, dX);
+      dqMap = tmpDeriv;
     }
 
     if (F != NULL) {
@@ -82,10 +87,11 @@ Mat DGSolver::rhs(Matr q, Matr Ww, double dt) {
 
       for (int d = 0; d < ndim; d++) {
 
-        MatMap dfMap(df.data() + d * V, Nd, V, OuterStride(ndim * V));
-        MatMap fMap(f.data() + d * V, Nd, V, OuterStride(ndim * V));
+        Mat fMap(MatMap(f.data() + d * V, Nd, V, OuterStride(ndim * V)));
+        derivs(tmpDeriv, fMap, d, DERVALS, ndim, dX);
 
-        derivs(dfMap, fMap, d, DERVALS, ndim, dX);
+        MatMap dfMap(df.data() + d * V, Nd, V, OuterStride(ndim * V));
+        dfMap = tmpDeriv;
       }
     }
 

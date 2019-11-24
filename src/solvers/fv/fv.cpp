@@ -32,10 +32,10 @@ FVSolver::FVSolver(void (*_F)(double *, double *, double *, int),
 
 void FVSolver::centers(Matr u, Matr qh, double dt) {
 
-  Mat dqh_dx(Nd, V);
+  Mat M(Nd, V);
   std::vector<Mat> dq(ndim);
   for (int d = 0; d < ndim; d++)
-    dq[d] = dqh_dx;
+    dq[d] = M;
 
   Mat b(V, V);
   Vec s(V);

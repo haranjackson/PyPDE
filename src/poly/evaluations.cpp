@@ -23,6 +23,8 @@ int zero_index(iVecr inds, int N, int d) {
 void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim, Vecr dX) {
   // ret[s] is the value of the derivative of qh in  direction d at node s
   // ret, qh have shape (N^ndim, V)
+  // NOTE: ret, qh must be contiguous
+
   int N = DERVALS.cols();
   int V = qh.cols();
   int Nd_ = std::pow(N, ndim - 1);
@@ -47,6 +49,7 @@ void derivs(Matr ret, Matr qh, int d, Matr DERVALS, int ndim, Vecr dX) {
 void endpts(Matr ret, Matr qh, int d, int e, Matr ENDVALS, int ndim) {
   // ret[i] is value of qh at end e (0 or 1) of the dth axis
   // ret has shape (N^(ndim-1), V), qh has shape (N^ndim, V)
+  // NOTE: qh must be contiguous
 
   int N = ENDVALS.cols();
   int V = qh.cols();
