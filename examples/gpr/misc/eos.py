@@ -2,9 +2,9 @@ import numpy as np
 from numba import njit
 from numpy import dot
 
-from testing.gpr.misc import mg
-from testing.gpr.misc.functions import dev, gram
-from testing.gpr.params import cs2, cα2
+from examples.gpr.misc import mg
+from examples.gpr.misc.functions import dev, gram
+from examples.gpr.params import cs2, cα2
 
 
 @njit

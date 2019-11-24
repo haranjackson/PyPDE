@@ -1,21 +1,8 @@
-from numba import njit
+from examples.gpr.misc.sources import theta1inv, theta2inv
+from examples.gpr.misc.state import (dEdA, dEdJ, heat_flux, pressure, sigma,
+                                     temperature)
+from examples.gpr.misc.utils import get_variables
 from numpy import dot, zeros
-
-from testing.gpr.misc.sources import theta1inv, theta2inv
-from testing.gpr.misc.state import (dEdA, dEdJ, heat_flux, pressure, sigma,
-                                    temperature)
-
-
-@njit
-def get_variables(Q):
-
-    ρ = Q[0]
-    E = Q[1] / ρ
-    v = Q[2:5] / ρ
-    A = Q[5:14].copy().reshape((3, 3))
-    J = Q[14:17] / ρ
-
-    return ρ, E, v, A, J
 
 
 def F_gpr(Q, d):

@@ -5,6 +5,10 @@ from numpy import dot, eye, zeros
 μ = 1e-2
 
 
+def total_energy(ρ, p, v):
+    return p / (ρ * (γ - 1)) + dot(v, v) / 2
+
+
 @njit
 def sigma(dv):
     return μ * (dv + dv.T - 2 / 3 * (dv[0, 0] + dv[1, 1] + dv[2, 2]) * eye(3))

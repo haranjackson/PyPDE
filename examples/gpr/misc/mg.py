@@ -1,6 +1,6 @@
 from numba import njit
 
-from testing.gpr.params import (EOS, STIFFENED_GAS, Γ0, Tref, c02, cv, pINF, s,
+from examples.gpr.params import (EOS, STIFFENED_GAS, Γ0, Tref, c02, cv, pINF, s,
                                 γ, ρ0)
 
 
