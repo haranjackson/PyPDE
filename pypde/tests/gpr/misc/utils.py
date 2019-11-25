@@ -1,4 +1,4 @@
-from examples.gpr.misc.eos import total_energy
+from pypde.tests.gpr.misc.eos import total_energy
 from numba import njit
 from numpy import eye, zeros
 

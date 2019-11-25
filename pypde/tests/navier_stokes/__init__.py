@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
-from examples.exact import viscous_shock_exact
-from examples.navier_stokes.system import F_navier_stokes, total_energy, γ
 from numpy import arange, array, dot, eye, zeros
-
 from pypde import ader_solver
+from pypde.tests.exact import viscous_shock_exact
+from pypde.tests.navier_stokes.system import F_navier_stokes, total_energy, γ
 
 
 def Cvec(ρ, p, v):
@@ -16,7 +15,7 @@ def Cvec(ρ, p, v):
     return Q
 
 
-def viscous_shock():
+def viscous_shock_ns():
     """ 10.1016/j.jcp.2016.02.015
         4.13 Viscous shock profile
     """

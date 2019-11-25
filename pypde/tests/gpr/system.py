@@ -1,7 +1,7 @@
-from examples.gpr.misc.sources import theta1inv, theta2inv
-from examples.gpr.misc.state import (dEdA, dEdJ, heat_flux, pressure, sigma,
+from pypde.tests.gpr.misc.sources import theta1inv, theta2inv
+from pypde.tests.gpr.misc.state import (dEdA, dEdJ, heat_flux, pressure, sigma,
                                      temperature)
-from examples.gpr.misc.utils import get_variables
+from pypde.tests.gpr.misc.utils import get_variables
 from numpy import dot, zeros
 
 

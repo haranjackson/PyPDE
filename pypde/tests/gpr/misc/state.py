@@ -1,10 +1,10 @@
 from numba import njit
 from numpy import dot
 
-from examples.gpr.misc import mg
-from examples.gpr.misc.eos import E_2A, E_2J, E_3
-from examples.gpr.misc.functions import dev, gram
-from examples.gpr.params import cs2, cα2
+from pypde.tests.gpr.misc import mg
+from pypde.tests.gpr.misc.eos import E_2A, E_2J, E_3
+from pypde.tests.gpr.misc.functions import dev, gram
+from pypde.tests.gpr.params import cs2, cα2
 
 
 @njit

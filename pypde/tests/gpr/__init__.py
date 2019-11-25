@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
-from examples.exact import viscous_shock_exact
-from examples.gpr.misc.utils import Cvec
-from examples.gpr.system import B_gpr, F_gpr, S_gpr
 from numpy import arange, array, eye, zeros
-
 from pypde import ader_solver
+from pypde.tests.exact import viscous_shock_exact
+from pypde.tests.gpr.misc.utils import Cvec
+from pypde.tests.gpr.system import B_gpr, F_gpr, S_gpr
 
 
-def viscous_shock(nx=200):
+def viscous_shock_gpr():
     """ 10.1016/j.jcp.2016.02.015
         4.13 Viscous shock profile
     """

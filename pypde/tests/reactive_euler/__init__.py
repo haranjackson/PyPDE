@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from examples.reactive_euler.system import (F_reactive_euler, S_reactive_euler,
+from pypde.tests.reactive_euler.system import (F_reactive_euler, S_reactive_euler,
                                             energy)
 from numpy import array, zeros
 

@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
-from examples.euler.system import F_euler, energy
 from mpl_toolkits.mplot3d import Axes3D
 from numpy import arange, array, meshgrid, zeros
-
 from pypde import ader_solver
+from pypde.tests.euler.system import F_euler, energy
 
 
 def plot_2d(L, Z):

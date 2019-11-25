@@ -2,9 +2,9 @@ from numba import njit
 from numpy import inf
 from numpy.linalg import det
 
-from examples.gpr.misc.functions import sigma_norm
-from examples.gpr.misc.state import sigma
-from examples.gpr.params import PLASTIC, T0, cs2, cα2, n, ρ0, σY, τ1, τ2
+from pypde.tests.gpr.misc.functions import sigma_norm
+from pypde.tests.gpr.misc.state import sigma
+from pypde.tests.gpr.params import PLASTIC, T0, cs2, cα2, n, ρ0, σY, τ1, τ2
 
 
 @njit
