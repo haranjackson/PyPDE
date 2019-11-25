@@ -1,6 +1,8 @@
 import inspect
 import sys
 from ctypes import CDLL, POINTER, c_bool, c_double, c_int, c_void_p
+from importlib.util import find_spec
+from sys import platform
 
 from numpy import array
 
@@ -64,10 +66,24 @@ def parse_boundary_types(boundaryTypes, ndim):
     return array(ret, dtype='int32')
 
 
+def get_cdll():
+
+    loc = find_spec('pypde').submodule_search_locations[0]
+
+    if platform == "linux" or platform == "linux2":
+        end = 'so'
+    if platform == "darwin":
+        end = 'dylib'
+    if platform == "win32":
+        end = 'dll'
+
+    return CDLL(loc + '/build/libpypde.' + end)
+
+
 def create_solver():
 
-    libader = CDLL('build/libader.dylib')
-    solver = libader.ader_solver
+    libpypde = get_cdll()
+    solver = libpypde.ader_solver
 
     solver.argtypes = ADER_ARGTYPES
     solver.restype = None

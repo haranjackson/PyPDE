@@ -1,8 +1,7 @@
 from ctypes import CDLL, POINTER, c_double, c_int
 
 from numpy import array, concatenate, int32, zeros
-
-from pypde.utils import c_ptr
+from pypde.utils import c_ptr, get_cdll
 
 
 def weno_solver(u, N=2):
@@ -13,8 +12,8 @@ def weno_solver(u, N=2):
 
     nXret = nX - 2 * (N - 1)
 
-    libader = CDLL('build/libader.dylib')
-    solver = libader.weno_solver
+    libpypde = get_cdll()
+    solver = libpypde.weno_solver
 
     solver.argtypes = [
         POINTER(c_double),

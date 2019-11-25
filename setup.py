@@ -1,294 +1,96 @@
-"""
-mplcairo build
-==============
-
-Environment variables:
-
-MPLCAIRO_MANYLINUX
-    - If set, build a manylinux wheel: pkg-config is shimmed and libstdc++ is
-      statically linked.
-
-MPLCAIRO_NO_UNITY_BUILD
-    - If set, compile the various cpp files separately, instead of as a single
-      compilation unit.  Unity builds tend to be faster even when using ccache,
-      because linking is rather time-consuming.
-"""
-
-import functools
-import json
 import os
 import platform
-import re
-import shlex
-import shutil
 import subprocess
 import sys
-import urllib.request
-from distutils.version import LooseVersion
-from enum import Enum
-from pathlib import Path
-from subprocess import CalledProcessError
 
-from setupext import Extension, build_ext, find_packages, setup
-
-if sys.platform == "darwin":
-    os.environ.setdefault("CC", "clang")
-    # Funnily enough, distutils uses $CC to compile c++ extensions but
-    # $CXX to *link* such extensions...  (Moreover, it does some funky
-    # changes to $CXX if either $CC or $CXX has multiple words -- see e.g.
-    # https://bugs.python.org/issue6863.)
-    os.environ.setdefault("CXX", "clang")
+from setuptools import Extension, find_packages, setup
+from setuptools.command.build_ext import build_ext
 
 
-
-MIN_CAIRO_VERSION = "1.11.4"  # Also in _feature_tests.cpp.
-MIN_RAQM_VERSION = "0.7.0"
-MANYLINUX = bool(os.environ.get("MPLCAIRO_MANYLINUX", ""))
-UNITY_BUILD = not bool(os.environ.get("MPLCAIRO_NO_UNITY_BUILD"))
-
-
-def get_pkg_config(info, lib):
-    if MANYLINUX:
-        if info.startswith("--atleast-version"):
-            if lib == "raqm":
-                raise FileNotFoundError  # Trigger the header download.
-            else:
-                return ""
-        if info == "--cflags":
-            return ["-static-libgcc", "-static-libstdc++",
-                    "-I/usr/include/cairo",
-                    "-I/usr/include/freetype2"]
-    return shlex.split(subprocess.check_output(["pkg-config", info, lib],
-                                               universal_newlines=True))
+class CMakeExtension(Extension):
+    def __init__(self, name, cmake_lists_dir='.', **kwa):
+        Extension.__init__(self, name, sources=[], **kwa)
+        self.cmake_lists_dir = os.path.abspath(cmake_lists_dir)
 
 
-@functools.lru_cache(1)
-def paths_from_link_libpaths():
-    # "Easy" way to call CommandLineToArgvW...
-    argv = json.loads(subprocess.check_output(
-        '"{}" -c "import json, sys; print(json.dumps(sys.argv[1:]))" {}'
-        .format(sys.executable, os.environ.get("LINK", ""))))
-    paths = []
-    for arg in argv:
-        match = re.fullmatch("(?i)/LIBPATH:(.*)", arg)
-        if match:
-            paths.append(Path(match.group(1)))
-    return paths
-
-
-class build_ext(build_ext):
-
+class cmake_build_ext(build_ext):
     def build_extensions(self):
+
         try:
-            import importlib.metadata as importlib_metadata
-        except ImportError:
-            import importlib_metadata
+            out = subprocess.check_output(['cmake', '--version'])
+        except OSError:
+            raise RuntimeError('Cannot find CMake executable')
 
-        ext, = self.distribution.ext_modules
+        for ext in self.extensions:
 
-        ext.depends += [
-            "setup.py",
-            *map(str, Path("src").glob("*.h")),
-            *map(str, Path("src").glob("*.cpp")),
-        ]
-        if UNITY_BUILD:
-            ext.sources += ["src/_unity_build.cpp"]
-        else:
-            ext.sources += [*map(str, Path("src").glob("*.cpp"))]
-            ext.sources.remove("src/_unity_build.cpp")
-        ext.language = "c++"
+            extdir = os.path.abspath(
+                os.path.dirname(self.get_ext_fullpath(ext.name)))
 
-        # pybind11.get_include() is brittle (pybind #1425).
-        pybind11_include_path = next(
-            path for path in importlib_metadata.files("pybind11")
-            if path.name == "pybind11.h").locate().parents[1]
-        if not (pybind11_include_path / "pybind11/pybind11.h").exists():
-            # egg-install from setup_requires:
-            # importlib-metadata thinks the headers are at
-            #   .eggs/pybind11-VER-TAG.egg/pybind11-VER.data/headers/pybind11.h
-            # but they're actually at
-            #   .eggs/pybind11-VER-TAG.egg/pybind11.h
-            # pybind11_include_path is
-            #   /<...>/.eggs/pybind11-VER-TAG.egg/pybind11-VER.data
-            # so just create the proper structure there.
-            try:
-                is_egg = (pybind11_include_path.relative_to(
-                    Path(__file__).resolve().parent).parts[0] == ".eggs")
-            except ValueError:
-                # Arch Linux ships completely wrong metadata, but the headers
-                # are in the default include paths, so just leave things as is.
-                is_egg = False
-            if is_egg:
-                shutil.rmtree(pybind11_include_path / "pybind11",
-                              ignore_errors=True)
-                for file in [*pybind11_include_path.parent.glob("**/*")]:
-                    if file.is_dir():
-                        continue
-                    dest = (pybind11_include_path / "pybind11" /
-                            file.relative_to(pybind11_include_path.parent))
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(file, dest)
+            cfg = 'Release'
 
-        ext.include_dirs += [pybind11_include_path]
+            cmake_args = [
+                '-DCMAKE_BUILD_TYPE=%s' % cfg,
 
-        tmp_include_dir = Path(self.get_finalized_command("build").build_base,
-                               "include")
-        tmp_include_dir.mkdir(parents=True, exist_ok=True)
-        ext.include_dirs += [tmp_include_dir]
-        try:
-            get_pkg_config(f"--atleast-version={MIN_RAQM_VERSION}", "raqm")
-        except (FileNotFoundError, CalledProcessError):
-            (tmp_include_dir / "raqm-version.h").write_text("")  # Touch it.
-            with urllib.request.urlopen(
-                    f"https://raw.githubusercontent.com/HOST-Oman/libraqm/"
-                    f"v{MIN_RAQM_VERSION}/src/raqm.h") as request, \
-                 (tmp_include_dir / "raqm.h").open("wb") as file:
-                file.write(request.read())
+                # Place result in the directory containing the extension
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
+                    cfg.upper(), extdir + '/' + ext.name + '/build'),
 
-        if sys.platform == "linux":
-            import cairo
-            get_pkg_config(f"--atleast-version={MIN_CAIRO_VERSION}", "cairo")
-            ext.include_dirs += [cairo.get_include()]
-            ext.extra_compile_args += [
-                "-std=c++1z", "-fvisibility=hidden", "-flto",
-                "-Wall", "-Wextra", "-Wpedantic",
-                *get_pkg_config("--cflags", "cairo"),
-            ]
-            ext.extra_link_args += ["-flto"]
-            if MANYLINUX:
-                ext.extra_link_args += ["-static-libgcc", "-static-libstdc++"]
+                # Place intermediate static libraries in temporary directory
+                '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_{}={}'.format(
+                    cfg.upper(), self.build_temp),
 
-        elif sys.platform == "darwin":
-            import cairo
-            get_pkg_config(f"--atleast-version={MIN_CAIRO_VERSION}", "cairo")
-            ext.include_dirs += [cairo.get_include()]
-            # On OSX<10.14, version-min=10.9 avoids deprecation warning wrt.
-            # libstdc++, but assumes that the build uses non-Xcode-provided
-            # LLVM.
-            # On OSX>=10.14, assume that the build uses the normal toolchain.
-            macosx_min_version = (
-                "10.14" if LooseVersion(platform.mac_ver()[0]) >= "10.14"
-                else "10.9")
-            ext.extra_compile_args += [
-                "-std=c++1z", "-fvisibility=hidden", "-flto",
-                f"-mmacosx-version-min={macosx_min_version}",
-                *get_pkg_config("--cflags", "cairo"),
-            ]
-            ext.extra_link_args += [
-                # version-min needs to be repeated to avoid a warning.
-                "-flto", f"-mmacosx-version-min={macosx_min_version}",
+                # Use the same Python executable that is launching the build,
+                # prevents mismatching if multiple Python versions are installed
+                '-DPYTHON_EXECUTABLE={}'.format(sys.executable)
             ]
 
-        elif sys.platform == "win32":
-            # Windows conda path for FreeType.
-            ext.include_dirs += [Path(sys.prefix, "Library/include")]
-            ext.extra_compile_args += [
-                "/std:c++17", "/Zc:__cplusplus", "/experimental:preprocessor",
-                "/EHsc", "/D_USE_MATH_DEFINES",
-                "/wd4244", "/wd4267",
-            ]  # cf. gcc -Wconversion.
-            ext.libraries += ["psapi", "cairo", "freetype"]
-            # Windows conda path for FreeType -- needs to be str, not Path.
-            ext.library_dirs += [str(Path(sys.prefix, "Library/lib"))]
+            # We can handle some platform-specific settings at our discretion
+            if platform.system() == 'Windows':
+                plat = ('x64'
+                        if platform.architecture()[0] == '64bit' else 'Win32')
+                cmake_args += [
+                    # These options are likely to be needed under Windows
+                    '-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE',
+                    '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_{}={}'.format(
+                        cfg.upper(), extdir)
+                ]
+                # Assuming that Visual Studio and MinGW are supported compilers
+                if self.compiler.compiler_type == 'msvc':
+                    cmake_args += ['-DCMAKE_GENERATOR_PLATFORM=%s' % plat]
+                else:
+                    cmake_args += ['-G', 'MinGW Makefiles']
 
-        # Workaround https://bugs.llvm.org/show_bug.cgi?id=33222 (clang +
-        # libstdc++ + std::variant = compilation error) and pybind11 #1604
-        # (-fsized-deallocation).  Note that `.compiler.compiler` only exists
-        # for UnixCCompiler.
-        if os.name == "posix":
-            compiler_macros = subprocess.check_output(
-                [*self.compiler.compiler, "-dM", "-E", "-x", "c", "/dev/null"],
-                universal_newlines=True)
-            if "__clang__" in compiler_macros:
-                ext.extra_compile_args += (
-                    ["-stdlib=libc++", "-fsized-deallocation"])
-                # Explicitly linking to libc++ is required to avoid picking up
-                # the system C++ library (libstdc++ or an outdated libc++).
-                ext.extra_link_args += ["-lc++"]
+            if not os.path.exists(self.build_temp):
+                os.makedirs(self.build_temp)
 
-        super().build_extensions()
+            # Config
+            subprocess.check_call(['cmake', ext.cmake_lists_dir] + cmake_args,
+                                  cwd=self.build_temp)
 
-        if sys.platform == "win32":
-            for dll in ["cairo.dll", "freetype.dll"]:
-                for path in paths_from_link_libpaths():
-                    if (path / dll).exists():
-                        shutil.copy2(path / dll,
-                                     Path(self.build_lib, "mplcairo"))
-                        break
-
-    def copy_extensions_to_source(self):
-        super().copy_extensions_to_source()
-        if sys.platform == "win32":
-            for dll in ["cairo.dll", "freetype.dll"]:
-                for path in paths_from_link_libpaths():
-                    if (path / dll).exists():
-                        shutil.copy2(path / dll,
-                                     self.get_finalized_command("build_py")
-                                     .get_package_dir("mplcairo"))
-                        break
-
-
-@setup.register_pth_hook("mplcairo.pth")
-def _pth_hook():
-    if os.environ.get("MPLCAIRO_PATCH_AGG"):
-        from importlib.machinery import PathFinder
-        class MplCairoMetaPathFinder(PathFinder):
-            def find_spec(self, fullname, path=None, target=None):
-                spec = super().find_spec(fullname, path, target)
-                if fullname == "matplotlib.backends.backend_agg":
-                    def exec_module(module):
-                        type(spec.loader).exec_module(spec.loader, module)
-                        # The pth file does not get properly uninstalled from
-                        # a develop install.  See pypa/pip#4176.
-                        try:
-                            import mplcairo.base
-                        except ImportError:
-                            return
-                        module.FigureCanvasAgg = \
-                            mplcairo.base.FigureCanvasCairo
-                        module.RendererAgg = \
-                            mplcairo.base.GraphicsContextRendererCairo
-                    spec.loader.exec_module = exec_module
-                    sys.meta_path.remove(self)
-                return spec
-        sys.meta_path.insert(0, MplCairoMetaPathFinder())
+            # Build
+            subprocess.check_call(['cmake', '--build', '.'],
+                                  cwd=self.build_temp)
 
 
 setup(
-    name="mplcairo",
-    description="A (new) cairo backend for Matplotlib.",
-    long_description=open("README.rst", encoding="utf-8").read(),
-    author="Antony Lee",
-    url="https://github.com/matplotlib/mplcairo",
-    license="MIT",
+    name='PyPDE',
+    version='0.9.0',
+    author='Haran Jackson',
+    author_email='jackson.haran@gmail.com',
     classifiers=[
-        "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.5",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
-    cmdclass={"build_ext": build_ext},
-    packages=find_packages("lib"),
-    package_dir={"": "lib"},
-    ext_modules=[Extension("mplcairo._mplcairo", [])],
+    cmdclass={'build_ext': cmake_build_ext},
+    description='Solve any hyperbolic/parabolic system of PDEs',
+    ext_modules=[CMakeExtension('pypde')],
+    install_requires=["numba>=0.46", "numpy>=1.14"],
+    long_description=open("README.rst").read(),
+    packages=find_packages(),
     python_requires=">=3.6",
-    setup_requires=[
-        "importlib_metadata>=0.8; python_version<'3.8'",  # Added files().
-        "setuptools_scm",
-        "pybind11>=2.2.4",
-        # Actually also a setup_requires on Linux, but in the manylinux build
-        # we need to shim it.
-        "pycairo>=1.16.0; sys_platform == 'darwin'",
-    ],
-    use_scm_version={  # xref __init__.py
-        "version_scheme": "post-release",
-        "local_scheme": "node-and-date",
-        "write_to": "lib/mplcairo/_version.py",
-    },
-    install_requires=[
-        "matplotlib>=2.2",
-        "pillow",  # Already a dependency of mpl>=3.3.
-        "pycairo>=1.16.0; os_name == 'posix'",
-    ],
-)
+    setup_requires=["cmake>=3.5"],
+    tests_require=["matplotlib>=2.0"],
+    url="https://github.com/haranjackson/pypde",
+    zip_safe=False)
