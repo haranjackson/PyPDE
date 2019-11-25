@@ -37,11 +37,7 @@ class cmake_build_ext(build_ext):
 
                 # Place intermediate static libraries in temporary directory
                 '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_{}={}'.format(
-                    cfg.upper(), self.build_temp),
-
-                # Use the same Python executable that is launching the build,
-                # prevents mismatching if multiple Python versions are installed
-                '-DPYTHON_EXECUTABLE={}'.format(sys.executable)
+                    cfg.upper(), self.build_temp)
             ]
 
             # We can handle some platform-specific settings at our discretion
