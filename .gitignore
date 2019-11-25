@@ -1,5 +1,8 @@
-build/
-debug/
-*.DS_Store
+build
+debug
+dist
+PyPDE.egg-info
+.eggs
 .vscode
+*.DS_Store
 *.pyc
