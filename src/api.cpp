@@ -18,11 +18,11 @@ extern "C" void ader_solver(void (*F)(double *, double *, double *, int),
   MatMap u(_u, ncell, V, OuterStride(V));
   MatMap ret(_ret, ndt, ncell * V, OuterStride(ncell * V));
 
-  if (not useF)
+  if (!useF)
     F = NULL;
-  if (not useB)
+  if (!useB)
     B = NULL;
-  if (not useS)
+  if (!useS)
     S = NULL;
 
   iterator(F, B, S, u, tf, nX, dX, CFL, boundaryTypes, STIFF, FLUX, N, ndt,
