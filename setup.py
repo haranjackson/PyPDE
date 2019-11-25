@@ -28,8 +28,6 @@ class cmake_build_ext(build_ext):
             cfg = 'Release'
 
             cmake_args = [
-                '-DCMAKE_BUILD_TYPE=%s' % cfg,
-
                 # Place result in the directory containing the extension
                 '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
                     cfg.upper(), extdir + '/' + ext.name + '/build'),
@@ -54,6 +52,9 @@ class cmake_build_ext(build_ext):
                     cmake_args += ['-DCMAKE_GENERATOR_PLATFORM=%s' % plat]
                 else:
                     cmake_args += ['-G', 'MinGW Makefiles']
+
+            else:
+                cmake_args.append('-DCMAKE_BUILD_TYPE={}'.format(cfg))
 
             if not os.path.exists(self.build_temp):
                 os.makedirs(self.build_temp)

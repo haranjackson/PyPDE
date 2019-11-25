@@ -4,7 +4,7 @@ project(ADER_CPP VERSION 0.9.0)
 
 include_directories(include)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 set(RUN_TEST 0)
@@ -39,12 +39,25 @@ set (SOURCES
     src/solvers/weno/weno_matrices.cpp)
 
 if (RUN_TEST)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fstandalone-debug")
+
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fstandalone-debug -std=c++11")
     SET(SOURCES ${SOURCES} "src/test.cpp")
+
     add_executable(ader_test ${SOURCES})
+
 else()
-    # -march=native seems slower sometimes
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -DNDEBUG -fno-math-errno")
+
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG")
+
+    if (UNIX)
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -fno-math-errno -std=c++11")
+    endif(UNIX)
+
+    if (WIN32)
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
+    endif(WIN32)
+
     add_library(pypde SHARED ${SOURCES})
     set_target_properties(pypde PROPERTIES VERSION ${PROJECT_VERSION})
+
 endif()
