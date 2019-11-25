@@ -87,6 +87,10 @@ setup(
     description='Solve any hyperbolic/parabolic system of PDEs',
     ext_modules=[CMakeExtension('pypde')],
     install_requires=["numba>=0.46", "numpy>=1.14"],
+    keywords=[
+        'ADER', 'WENO', 'Discontinuous Galerkin', 'Finite Volume', 'PDEs',
+        'Partial Differential Equations', 'Hyperbolic', 'Parabolic'
+    ],
     long_description=open("README.rst").read(),
     packages=find_packages(),
     python_requires=">=3.6",
