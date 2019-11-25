@@ -3,34 +3,31 @@ name: CI
 on: [push]
 
 jobs:
-
-  linux_build:
+  linux_build_3_6:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Build dist
-        run: python setup.py sdist bdist_wheel
+        run: python3.6 setup.py sdist bdist_wheel
       - name: Publish to PyPI
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          
-  macos_build:
+        run: |
+          python3.6 -m pip install twine
+          python3.6 -m twine upload -u __token__ -p ${{ secrets.pypi_password }}
+
+  macos_build_3_6:
     runs-on: macOS-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Build dist
-        run: python setup.py sdist bdist_wheel
+        run: python3.6 setup.py sdist bdist_wheel
       - name: Publish to PyPI
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
+        run: |
+          python3.6 -m pip install twine
+          python3.6 -m twine upload -u __token__ -p ${{ secrets.pypi_password }}
 
   windows_build:
     runs-on: windows-latest
@@ -38,11 +35,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Build dist
-        run: python setup.py sdist bdist_wheel
+        run: python3.6 setup.py sdist bdist_wheel
       - name: Publish to PyPI
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-    
+        run: |
+          python3.6 -m pip install twine
+          python3.6 -m twine upload -u __token__ -p ${{ secrets.pypi_password }}
