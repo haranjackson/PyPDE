@@ -83,7 +83,7 @@ def get_cdll():
 def create_solver():
 
     libpypde = get_cdll()
-    solver = libpypde.ader_solver
+    solver = libpypde.pde_solver
 
     solver.argtypes = ADER_ARGTYPES
     solver.restype = None

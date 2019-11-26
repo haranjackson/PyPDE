@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from numpy import arange, array, dot, eye, zeros
-from pypde import ader_solver
+from pypde import pde_solver
 from pypde.tests.exact import viscous_shock_exact
 from pypde.tests.navier_stokes.system import F_navier_stokes, total_energy, γ
 
@@ -37,7 +37,7 @@ def viscous_shock_ns():
 
     L = [1.]
 
-    ret = ader_solver(u, tf, L, F=F_navier_stokes, CFL=0.6)
+    ret = pde_solver(u, tf, L, F=F_navier_stokes, CFL=0.6)
 
     plt.plot(ret[-1, :, 2] / ret[-1, :, 0])
     plt.show()

@@ -3,7 +3,7 @@ from pypde.tests.reactive_euler.system import (F_reactive_euler, S_reactive_eule
                                             energy)
 from numpy import array, zeros
 
-from pypde import ader_solver
+from pypde import pde_solver
 
 
 def detonation_wave():
@@ -35,7 +35,7 @@ def detonation_wave():
     tf = 0.5
     L = [1.]
 
-    ret = ader_solver(u,
+    ret = pde_solver(u,
                       tf,
                       L,
                       F=F_reactive_euler,
