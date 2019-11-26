@@ -36,13 +36,16 @@ jobs:
         python-version: [cp36-cp36m, cp37-cp37m, cp38-cp38]
     runs-on: ubuntu-latest
     name: manylinux ${{ matrix.python-version }}
-    container: quay.io/pypa/manylinux2010_x86_64
+    container:
+      image: quay.io/pypa/manylinux2010_x86_64
+      volumes:
+        - $GITHUB_WORKSPACE:/io
     steps:
       - name: Checkout
         uses: actions/checkout@master
       - name: Install Dependencies
         run: |
-          cd /github/workspace
+          cd /io
           /opt/python/${{ matrix.python-version }}/bin/pip install setuptools wheel scikit-build cmake
           export PATH="/opt/python/${{ matrix.python-version }}/bin:$PATH"
           /opt/python/${{ matrix.python-version }}/bin/python setup.py bdist_wheel
