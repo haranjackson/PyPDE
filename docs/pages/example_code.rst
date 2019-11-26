@@ -9,7 +9,7 @@ Reactive Euler
 
 We must define our fluxes and source vector:
 
-.. code-block::
+.. code-block:: python
 
     from numba import njit
     from numpy import zeros
@@ -19,20 +19,20 @@ We must define our fluxes and source vector:
     cv = 2.5
     Ti = 0.25
     K0 = 250
-    γ = 1.4
+    gam = 1.4
 
     def F(Q, i):
 
-        ρ = Q[0]
-        E = Q[1] / ρ
-        v = Q[2:5] / ρ
-        λ = Q[5] / ρ
+        r = Q[0]
+        E = Q[1] / r
+        v = Q[2:5] / r
+        lam = Q[5] / r
 
         # internal energy
-        e = E - (v[0]**2 + v[1]**2 + v[2]**2) / 2 - Qc * (λ - 1)
+        e = E - (v[0]**2 + v[1]**2 + v[2]**2) / 2 - Qc * (lam - 1)
 
         # pressure
-        p = (γ - 1) * ρ * e
+        p = (gam - 1) * r * e
 
         ret = v[i] * Q
         ret[1] += p * v[i]
@@ -41,9 +41,9 @@ We must define our fluxes and source vector:
         return ret
 
     @njit
-    def reaction_rate(E, v, λ):
+    def reaction_rate(E, v, lam):
 
-        e = internal_energy(E, v, λ)
+        e = internal_energy(E, v, lam)
         T = e / cv
 
         return K0 if T > Ti else 0
@@ -52,12 +52,12 @@ We must define our fluxes and source vector:
 
         ret = zeros(6)
 
-        ρ = Q[0]
-        E = Q[1] / ρ
-        v = Q[2:5] / ρ
-        λ = Q[5] / ρ
+        r = Q[0]
+        E = Q[1] / r
+        v = Q[2:5] / r
+        lam = Q[5] / r
 
-        ret[5] = -ρ * λ * reaction_rate(E, v, λ)
+        ret[5] = -r * lam * reaction_rate(E, v, lam)
 
         return ret
 
@@ -76,29 +76,29 @@ hit usually associated with Python loops and other features.
 We now set out the initial conditions for the 1D detonation wave test. We use
 400 cells, with a domain length of 1. The test is run to a final time of 0.5.
 
-.. code-block::
+.. code-block:: python
 
-    def energy(ρ, p, v, λ):
-        return p / ((γ - 1) * ρ) + inner(v, v) / 2 + Qc * (λ - 1)
+    def energy(r, p, v, lam):
+        return p / ((gam - 1) * r) + inner(v, v) / 2 + Qc * (lam - 1)
 
     nx = 400
     L = [1.]
     tf = 0.5
 
-    ρL = 1.4
+    rL = 1.4
     pL = 1
     vL = [0, 0, 0]
-    λL = 0
-    EL = energy(ρL, pL, vL, λL)
+    lamL = 0
+    EL = energy(rL, pL, vL, lamL)
 
-    ρR = 0.887565
+    rR = 0.887565
     pR = 0.191709
     vR = [-0.57735, 0, 0]
-    λR = 1
-    ER = energy(ρR, pR, vR, λR)
+    lamR = 1
+    ER = energy(rR, pR, vR, lamR)
 
-    QL = ρL * ([1, EL] + vL)
-    QR = ρR * ([1, ER] + vR)
+    QL = rL * ([1, EL] + vL)
+    QR = rR * ([1, ER] + vR)
 
     u = zeros([nx, 6])
     for i in range(nx):
@@ -111,7 +111,7 @@ We now solve the system. ``pde_solver`` returns an array ``ret`` of shape
 :math:`100\times nx\times 5`. ``ret[j]`` corresponds to the domain at j% through
 the simulation. We plot the final state of the domain for variable 0 (density):
 
-.. code-block::
+.. code-block:: python
 
     import matplotlib.pyplot as plt
 
