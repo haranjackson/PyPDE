@@ -28,35 +28,35 @@ Background
 We can solve any system of PDEs of the form:
 
 .. image:: https://github.com/haranjackson/PyPDE/raw/master/images/SystemExpanded.png
-   :width: 480px
+   :width: 360px
    :alt: Godunov-Romenski equations
    :align: center
 
 or, more succinctly:
 
 .. image:: https://github.com/haranjackson/PyPDE/raw/master/images/System.png
-   :height: 40px
+   :height: 30px
    :alt: Godunov-Romenski equations
    :align: center
 
 Note that this includes the Navier-Stokes equations:
 
 .. image:: https://github.com/haranjackson/PyPDE/raw/master/images/NavierStokes.png
-   :width: 480px
+   :width: 360px
    :alt: Godunov-Romenski equations
    :align: center
 
 where:
 
 .. image:: https://github.com/haranjackson/PyPDE/raw/master/images/TotalStressNS.png
-   :height: 40px
+   :height: 30px
    :alt: Godunov-Romenski equations
    :align: center
 
 and the Reactive Euler equations:
 
 .. image:: https://github.com/haranjackson/PyPDE/raw/master/images/ReactiveEuler.png
-   :width: 480px
+   :width: 360px
    :alt: Godunov-Romenski equations
    :align: center
 
@@ -65,14 +65,14 @@ where ``K`` is a (potentially large) function depending on temperature ``T``.
 It also includes the the Godunov-Romenski equations:
 
 .. image:: https://github.com/haranjackson/PyPDE/raw/master/images/GodunovRomenski.png
-   :width: 480px
+   :width: 360px
    :alt: Godunov-Romenski equations
    :align: center
 
 where now θ is a (potentially very small) function of A, and:
 
 .. image:: https://github.com/haranjackson/PyPDE/raw/master/images/TotalStressGR.png
-   :height: 40px
+   :height: 30px
    :alt: Godunov-Romenski equations
    :align: center
 
