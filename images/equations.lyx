@@ -1,0 +1,227 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align}
+\frac{\partial\mathbf{Q}}{\partial t} & +\frac{\partial}{\partial x_{1}}\mathbf{F}_{1}\left(\mathbf{Q},\frac{\partial\mathbf{Q}}{\partial x_{1}},\ldots,\frac{\partial\mathbf{Q}}{\partial x_{n}}\right)+\cdots+\frac{\partial}{\partial x_{n}}\mathbf{F}_{n}\left(\mathbf{Q},\frac{\partial\mathbf{Q}}{\partial x_{1}},\ldots,\frac{\partial\mathbf{Q}}{\partial x_{n}}\right)\\
+ & +B_{1}\left(\mathbf{Q}\right)\frac{\partial\mathbf{Q}}{\partial x_{1}}+\cdots+B_{n}\left(\mathbf{Q}\right)\frac{\partial\mathbf{Q}}{\partial x_{n}}\\
+ & =\mathbf{S}\left(\mathbf{Q}\right)
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\mathbf{Q}}{\partial t}+\nabla\mathbf{F}\left(\mathbf{Q},\nabla\mathbf{Q}\right)+B\left(\mathbf{Q}\right)\cdot\nabla\mathbf{Q}=\mathbf{S}\left(\mathbf{Q}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{Q}=\left(\begin{array}{c}
+\rho\\
+\rho E\\
+\rho v_{1}\\
+\rho v_{2}\\
+\rho v_{3}
+\end{array}\right)\quad\mathbf{F}_{i}=\left(\begin{array}{c}
+\rho v_{i}\\
+\rho Ev_{i}+\mathbf{\Sigma_{i}}\cdot\mathbf{v}\\
+\rho v_{i}v_{1}+\mathbf{\Sigma_{i1}}\\
+\rho v_{i}v_{2}+\mathbf{\Sigma_{i2}}\\
+\rho v_{i}v_{3}+\mathbf{\Sigma_{i3}}
+\end{array}\right)\quad B_{i}=0\quad\mathbf{S}=0
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\Sigma=pI-\mu\left(\nabla\mathbf{v}+\nabla\mathbf{v}^{T}-\frac{2}{3}tr\left(\nabla\mathbf{v}\right)I\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{Q}=\left(\begin{array}{c}
+\rho\\
+\rho E\\
+\rho v_{1}\\
+\rho v_{2}\\
+\rho\lambda
+\end{array}\right)\quad\mathbf{F}_{i}=\left(\begin{array}{c}
+\rho v_{i}\\
+\left(\rho E+p\right)v_{i}\\
+\rho v_{i}v_{1}+\delta_{i1}p\\
+\rho v_{i}v_{2}+\delta_{i2}p\\
+\rho v_{i}\lambda
+\end{array}\right)\quad B_{i}=0\quad\mathbf{S}=\left(\begin{array}{c}
+0\\
+0\\
+0\\
+0\\
+-\rho\lambda K\left(T\right)
+\end{array}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{Q}=\begin{pmatrix}\rho\\
+\rho E\\
+\rho v_{1}\\
+\rho v_{2}\\
+\rho v_{3}\\
+A_{11}\\
+A_{12}\\
+A_{13}\\
+A_{21}\\
+A_{22}\\
+A_{23}\\
+A_{31}\\
+A_{32}\\
+A_{33}
+\end{pmatrix}\quad\mathbf{F}_{i}=\begin{pmatrix}\rho v_{i}\\
+\rho Ev_{i}+\mathbf{\Sigma_{i}}\cdot\mathbf{v}\\
+\rho v_{i}v_{1}+\mathbf{\Sigma_{i1}}\\
+\rho v_{i}v_{2}+\mathbf{\Sigma_{i2}}\\
+\rho v_{i}v_{3}+\mathbf{\Sigma_{i3}}\\
+\delta_{i1}\mathbf{A_{1}}\cdot\mathbf{v}\\
+\delta_{i2}\mathbf{A_{1}}\cdot\mathbf{v}\\
+\delta_{i3}\mathbf{A_{1}}\cdot\mathbf{v}\\
+\delta_{i1}\mathbf{A_{2}}\cdot\mathbf{v}\\
+\delta_{i2}\mathbf{A_{2}}\cdot\mathbf{v}\\
+\delta_{i3}\mathbf{A_{2}}\cdot\mathbf{v}\\
+\delta_{i1}\mathbf{A_{3}}\cdot\mathbf{v}\\
+\delta_{i2}\mathbf{A_{3}}\cdot\mathbf{v}\\
+\delta_{i3}\mathbf{A_{3}}\cdot\mathbf{v}
+\end{pmatrix}\quad B_{i}=v_{i}I_{14}-\left(\begin{array}{cccc}
+0_{5} & 0_{3} & 0_{3} & 0_{3}\\
+0_{3} & \delta_{i1}v_{1}I_{3} & \delta_{i1}v_{2}I_{3} & \delta_{i1}v_{3}I_{3}\\
+0_{3} & \delta_{i2}v_{1}I_{3} & \delta_{i2}v_{2}I_{3} & \delta_{i2}v_{3}I_{3}\\
+0_{3} & \delta_{i3}v_{1}I_{3} & \delta_{i3}v_{2}I_{3} & \delta_{i3}v_{3}I_{3}
+\end{array}\right)\quad\mathbf{S}=-\frac{1}{\theta_{1}}\left(\begin{array}{c}
+\mathbf{0_{5}}\\
+\mathbf{\frac{\partial E}{\partial A}_{1}}\\
+\mathbf{\frac{\partial E}{\partial A}_{2}}\\
+\mathbf{\frac{\partial E}{\partial A}_{3}}
+\end{array}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\Sigma=pI+\rho A^{T}\frac{\partial E}{\partial A}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
