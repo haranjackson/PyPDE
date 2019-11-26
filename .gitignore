@@ -1,6 +1,7 @@
 build
 debug
 dist
+docs/_build
 pypde/build
 PyPDE.egg-info
 .eggs
