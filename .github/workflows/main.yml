@@ -33,13 +33,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [cp36-cp36m  cp37-cp37m  cp38-cp38]
+        python-version: [cp36-cp36m, cp37-cp37m, cp38-cp38]
     runs-on: ubuntu-latest
     name: manylinux ${{ matrix.python-version }}
     container:
       image: quay.io/pypa/manylinux2010_x86_64
       volumes:
-        - /:/io
+        - /io:/
     steps:
       - name: Checkout
         uses: actions/checkout@master
