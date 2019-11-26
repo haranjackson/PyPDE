@@ -15,7 +15,7 @@ or, more succinctly:
 
     \frac{\partial\mathbf{Q}}{\partial t}+\nabla\mathbf{F}\left(\mathbf{Q},\nabla\mathbf{Q}\right)+B\left(\mathbf{Q}\right)\cdot\nabla\mathbf{Q}=\mathbf{S}\left(\mathbf{Q}\right)
 
-See the examples section below.
+See :doc:`examples of such systems<example_pdes>` .
 
 If you give the values of :math:`\mathbf{Q}` at time :math:`t=0` on a
 rectangular domain in :math:`\mathbb{R}^n`, then PyPDE will calculate
