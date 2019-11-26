@@ -91,6 +91,6 @@ setup(
     packages=find_packages(),
     python_requires=">=3.6",
     setup_requires=["cmake>=3.5"],
-    tests_require=["matplotlib>=2.0"],
+    tests_require=["matplotlib>=2.0", "scipy>=1.1.0"],
     url="https://github.com/haranjackson/pypde",
     zip_safe=False)
