@@ -124,7 +124,7 @@ the simulation. We plot the final state of the domain for variable 0 (density):
 
 The plot is found below, in accordance with accepted numerical results:
 
-.. image:: https://github.com/haranjackson/PyPDE/raw/master/images/ReactiveEulerDetonation.png
+.. image:: https://github.com/haranjackson/PyPDE/raw/master/docs/images/ReactiveEulerDetonation.png
    :width: 360px
    :alt: Reactive Euler detonation wave
    :align: center
