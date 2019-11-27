@@ -4,8 +4,8 @@ Example Code
 See more examples `here
 <https://github.com/haranjackson/PyPDE/tree/master/pypde/tests>`_.
 
-Reactive Euler
---------------
+Reactive Euler (1D, S≠0)
+------------------------
 
 We must define our fluxes and source vector:
 
@@ -21,6 +21,10 @@ We must define our fluxes and source vector:
     K0 = 250
     gam = 1.4
 
+    @njit
+    def internal_energy(E, v, lam):
+        return E - (v[0]**2 + v[1]**2 + v[2]**2) / 2 - Qc * (lam - 1)
+
     def F(Q, i):
 
         r = Q[0]
@@ -28,8 +32,7 @@ We must define our fluxes and source vector:
         v = Q[2:5] / r
         lam = Q[5] / r
 
-        # internal energy
-        e = E - (v[0]**2 + v[1]**2 + v[2]**2) / 2 - Qc * (lam - 1)
+        e = internal_energy(E, v, lam)
 
         # pressure
         p = (gam - 1) * r * e
@@ -78,6 +81,8 @@ We now set out the initial conditions for the 1D detonation wave test. We use
 
 .. code-block:: python
 
+    from numpy import inner, array
+
     def energy(r, p, v, lam):
         return p / ((gam - 1) * r) + inner(v, v) / 2 + Qc * (lam - 1)
 
@@ -97,8 +102,8 @@ We now set out the initial conditions for the 1D detonation wave test. We use
     lamR = 1
     ER = energy(rR, pR, vR, lamR)
 
-    QL = rL * ([1, EL] + vL)
-    QR = rR * ([1, ER] + vR)
+    QL = rL * array([1, EL] + vL + [lamL])
+    QR = rR * array([1, ER] + vR + [lamR])
 
     u = zeros([nx, 6])
     for i in range(nx):
