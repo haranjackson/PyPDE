@@ -18,6 +18,8 @@ Key Features:
 Please feel free to message me with questions/suggestions:
 jackson.haran@gmail.com
 
+.. image:: https://github.com/haranjackson/PyPDE/workflows/All%20Builds/badge.svg
+
 Installation
 ------------
 
