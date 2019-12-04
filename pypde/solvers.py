@@ -1,4 +1,5 @@
 from ctypes import POINTER, c_double, c_int
+from multiprocessing import cpu_count
 
 from numpy import array, concatenate, int32, zeros
 
@@ -20,7 +21,8 @@ def pde_solver(u,
                B=None,
                S=None,
                boundaryTypes='transitive',
-               CFL=0.9):
+               CFL=0.9,
+               nThreads=-1):
 
     nX = array(u.shape[:-1], dtype='int32')
     ndim = len(nX)
@@ -52,9 +54,12 @@ def pde_solver(u,
     ret = zeros(ndt * u.size)
     ur = u.ravel()
 
+    if nThreads < 1:
+        nThreads = cpu_count() - 1
+
     solver(_F.ctypes, _B.ctypes, _S.ctypes, useF, useB, useS, c_ptr(ur), tf,
            c_ptr(nX), ndim, c_ptr(dX), CFL, c_ptr(boundaryTypes), STIFF,
-           FLUXES[flux], N, V, ndt, secondOrder, c_ptr(ret))
+           FLUXES[flux], N, V, ndt, secondOrder, c_ptr(ret), nThreads)
 
     return ret.reshape((ndt, ) + u.shape)
 

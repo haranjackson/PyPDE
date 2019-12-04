@@ -68,6 +68,6 @@ int main() {
   double _ret[ndt * nX * nY * V];
 
   pde_solver(F, B, S, true, false, false, _u, tf, _nX, ndim, _dX, CFL,
-             _boundaryTypes, STIFF, FLUX, N, V, ndt, false, _ret);
+             _boundaryTypes, STIFF, FLUX, N, V, ndt, false, _ret, -1);
   return 0;
 }

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from numpy import arange, array, meshgrid, zeros
+
 from pypde import pde_solver
 from pypde.tests.euler.system import F_euler, energy
 
@@ -51,11 +52,11 @@ def sod_shock():
     boundaryTypes = ['transitive', 'periodic']
 
     ret = pde_solver(u,
-                      tf,
-                      L,
-                      F=F_euler,
-                      STIFF=False,
-                      boundaryTypes=boundaryTypes)
+                     tf,
+                     L,
+                     F=F_euler,
+                     STIFF=False,
+                     boundaryTypes=boundaryTypes)
 
     plot_2d(L, ret[-1, :, :, 0])
 
