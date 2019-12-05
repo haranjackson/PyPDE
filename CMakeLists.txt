@@ -50,7 +50,7 @@ else()
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG")
 
     if (UNIX)
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -fno-math-errno -std=c++11")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-math-errno -std=c++11")
     endif(UNIX)
 
     if (WIN32)

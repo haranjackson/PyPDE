@@ -12,7 +12,7 @@ ADER_ARGTYPES = [
     POINTER(c_int), c_int,
     POINTER(c_double), c_double,
     POINTER(c_int), c_bool, c_int, c_int, c_int, c_int, c_bool,
-    POINTER(c_double)
+    POINTER(c_double), c_int
 ]
 
 BOUNDARIES = {'transitive': 0, 'periodic': 1}

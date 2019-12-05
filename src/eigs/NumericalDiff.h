@@ -3,8 +3,8 @@
 
 #include "../types.h"
 
-Mat df(Matr jac, void (*F)(double *, double *, double *, int), Vecr q, Matr dq,
-       int d, bool secondOrder, bool forwardMode = true) {
+void df(Matr jac, void (*F)(double *, double *, double *, int), Vecr q, Matr dq,
+        int d, bool secondOrder, bool forwardMode = true) {
 
   const double eps = std::sqrt(Eigen::NumTraits<double>::epsilon());
 
@@ -41,7 +41,6 @@ Mat df(Matr jac, void (*F)(double *, double *, double *, int), Vecr q, Matr dq,
       jac.col(i) = (val2 - val1) / (2 * h);
     }
   }
-  return jac;
 }
 
 #endif // NUMERICAL_DIFF_H

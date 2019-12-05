@@ -17,17 +17,23 @@ WenoSolver::WenoSolver(iVecr _nX, int _N, int _V) : nX(_nX), N(_N), V(_V) {
   MCL = Dec(coeffMats[2]);
   MCR = Dec(coeffMats[3]);
   SIG = oscillation_indicator(basis);
+
+  tmp = Mat(N, V);
+  num = Mat(N, V);
+  den = Vec(V);
 }
 
-void WenoSolver::coeffs_inner(Matr w, Dec M, Matr dataBlock, Matr num, Vecr den,
-                              double LAM) {
+void WenoSolver::coeffs_inner(Dec M, Matr dataBlock, double LAM) {
 
-  w = M.solve(dataBlock);
+  tmp = M.solve(dataBlock);
 
   for (int i = 0; i < V; i++) {
-    double tmp = w.col(i).transpose() * SIG * w.col(i) + EPS;
-    double o = LAM / std::pow(tmp, r);
-    num.col(i) += o * w.col(i);
+    double p = tmp.col(i).transpose() * SIG * tmp.col(i) + EPS;
+    double p2 = p * p;
+    double p4 = p2 * p2;
+    double p8 = p4 * p4;
+    double o = LAM / p8;
+    num.col(i) += o * tmp.col(i);
     den(i) += o;
   }
 }
@@ -35,23 +41,21 @@ void WenoSolver::coeffs_inner(Matr w, Dec M, Matr dataBlock, Matr num, Vecr den,
 Vec WenoSolver::coeffs(Matr data) {
   // Calculate coefficients of basis polynomials and weights
 
-  Mat w(N, V);
+  num.setZero();
+  den.setZero();
 
-  Mat num = Mat::Zero(N, V);
-  Vec den = Vec::Zero(V);
-
-  coeffs_inner(w, ML, data.block(0, 0, N, V), num, den, LAMS);
-  coeffs_inner(w, MR, data.block(N - 1, 0, N, V), num, den, LAMS);
+  coeffs_inner(ML, data.block(0, 0, N, V), LAMS);
+  coeffs_inner(MR, data.block(N - 1, 0, N, V), LAMS);
 
   if (N > 2) {
-    coeffs_inner(w, MCL, data.block(FN2, 0, N, V), num, den, LAMC);
+    coeffs_inner(MCL, data.block(FN2, 0, N, V), LAMC);
 
     if (N % 2 == 0) // Two central stencils (N>3)
-      coeffs_inner(w, MCR, data.block(CN2, 0, N, V), num, den, LAMC);
+      coeffs_inner(MCR, data.block(CN2, 0, N, V), LAMC);
   }
 
-  w.array() = num.array().rowwise() / den.transpose().array();
-  return VecMap(w.data(), w.size());
+  tmp.array() = num.array().rowwise() / den.transpose().array();
+  return VecMap(tmp.data(), N * V);
 }
 
 Mat WenoSolver::reconstruction(Matr ub) {
@@ -83,7 +87,7 @@ Mat WenoSolver::reconstruction(Matr ub) {
 
     int n4 = std::pow(N, d);
 
-    Mat tmp(n1 * n2 * n3 * n4 * N, V);
+    Mat rec2(n1 * n2 * n3 * n4 * N, V);
 
     int stride = n3 * n4 * V;
 
@@ -102,14 +106,14 @@ Mat WenoSolver::reconstruction(Matr ub) {
 
           for (int i = 0; i < n2; i++) {
 
-            VecMap vh(tmp.data() + indw + i * N * stride, N * V);
+            VecMap vh(rec2.data() + indw + i * N * stride, N * V);
 
             // eval to stop lazy evaluation, which causes nans
             vh = coeffs(ub0.block(i, 0, 2 * N - 1, V)).eval();
           }
         }
 
-    rec = tmp;
+    rec = rec2;
     shape(d) -= 2 * (N - 1);
   }
 

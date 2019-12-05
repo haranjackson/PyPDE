@@ -8,7 +8,6 @@ private:
   const double LAMS = 1.;   // WENO side stencil weighting
   const double LAMC = 1e5;  // WENO central stencil weighting
   const double EPS = 1e-14; // WENO epsilon parameter
-  const double r = 8.;      // WENO exponent parameter
 
   iVec nX;
   int N;
@@ -23,8 +22,11 @@ private:
   Dec MCR;
   Mat SIG;
 
-  void coeffs_inner(Matr w, Dec M, Matr dataBlock, Matr num, Vecr den,
-                    double LAM);
+  Mat tmp;
+  Mat num;
+  Vec den;
+
+  void coeffs_inner(Dec M, Matr dataBlock, double LAM);
 
   Vec coeffs(Matr data);
 
