@@ -1,4 +1,4 @@
-name: "All Builds"
+name: "Builds"
 
 on: [push]
 
