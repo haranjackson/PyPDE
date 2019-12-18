@@ -39,7 +39,7 @@ jobs:
     container: quay.io/pypa/manylinux2010_x86_64
     steps:
       - name: Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v1.2.0
       - name: Install Dependencies
         run: |
           /opt/python/${{ matrix.python-version }}/bin/pip install setuptools wheel scikit-build cmake
