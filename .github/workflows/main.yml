@@ -13,7 +13,7 @@ jobs:
     name: ${{ matrix.os }} ${{ matrix.python-version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v2.0.0
       - name: Setup Python
         uses: actions/setup-python@v1
         with:
@@ -39,7 +39,7 @@ jobs:
     container: quay.io/pypa/manylinux2010_x86_64
     steps:
       - name: Checkout
-        uses: actions/checkout@v1.2.0
+        uses: actions/checkout@v1.2.0 # v2.0.0 causes "missing GLIBC_2.x" errors
       - name: Install Dependencies
         run: |
           /opt/python/${{ matrix.python-version }}/bin/pip install setuptools wheel scikit-build cmake
