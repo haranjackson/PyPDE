@@ -1,2 +1,3 @@
 numba
 numpy
+scipy>=0.16 # for linear algebra functions in compiled code
