@@ -122,7 +122,7 @@ the simulation. We plot the final state of the domain for variable 0 (density):
 
     from pypde import pde_solver
 
-    out = pde_solver(Q0, tf, L, F=F, S=S)
+    out = pde_solver(Q0, tf, L, F=F, S=S, stiff=False, flux='roe', order=3)
 
     plt.plot(out[-1, :, 0])
     plt.show()
