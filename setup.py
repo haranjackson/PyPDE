@@ -70,7 +70,7 @@ class cmake_build_ext(build_ext):
 
 setup(
     name='PyPDE',
-    version='0.9.1',
+    version='1.0.0',
     author='Haran Jackson',
     author_email='jackson.haran@gmail.com',
     classifiers=[

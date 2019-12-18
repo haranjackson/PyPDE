@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 set(CMAKE_CXX_STANDARD 11)
-project(ADER_CPP VERSION 0.9.1)
+project(ADER_CPP VERSION 1.0.0)
 
 include_directories(include)
 
