@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-PyPDE: Documentation
-====================
+PyPDE
+=====
 
 A Python library for solving any system of hyperbolic or parabolic Partial
 Differential Equations. The PDEs can have stiff source terms and
@@ -22,11 +22,15 @@ Key Features:
 Please feel free to message me with questions/suggestions:
 jackson.haran@gmail.com
 
+**Quickstart**: check out the :doc:`core functionality<pages/core_functionality>`
+and :doc:`example code<pages/example_code>`.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    pages/installation
    pages/background
+   pages/core_functionality
    pages/example_pdes
    pages/example_code
