@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from numpy import arange, array, eye, zeros
+
 from pypde import pde_solver
 from pypde.tests.exact import viscous_shock_exact
 from pypde.tests.gpr.misc.utils import Cvec
@@ -31,7 +32,7 @@ def viscous_shock_gpr():
 
     L = [1.]
 
-    ret = pde_solver(u, tf, L, F=F_gpr, B=B_gpr, S=S_gpr, CFL=0.6)
+    ret = pde_solver(u, tf, L, F=F_gpr, B=B_gpr, S=S_gpr, cfl=0.6)
 
     plt.plot(ret[-1, :, 2] / ret[-1, :, 0])
     plt.show()

@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
-from pypde.tests.reactive_euler.system import (F_reactive_euler, S_reactive_euler,
-                                            energy)
 from numpy import array, zeros
 
 from pypde import pde_solver
+from pypde.tests.reactive_euler.system import (F_reactive_euler,
+                                               S_reactive_euler, energy)
 
 
 def detonation_wave():
@@ -36,14 +36,14 @@ def detonation_wave():
     L = [1.]
 
     ret = pde_solver(u,
-                      tf,
-                      L,
-                      F=F_reactive_euler,
-                      S=S_reactive_euler,
-                      STIFF=False,
-                      CFL=0.6,
-                      flux='roe',
-                      N=3)
+                     tf,
+                     L,
+                     F=F_reactive_euler,
+                     S=S_reactive_euler,
+                     stiff=False,
+                     cfl=0.6,
+                     flux='roe',
+                     order=3)
 
     plt.plot(ret[-1, :, 0])
     plt.show()

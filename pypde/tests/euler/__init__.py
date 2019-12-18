@@ -55,7 +55,7 @@ def sod_shock():
                      tf,
                      L,
                      F=F_euler,
-                     STIFF=False,
+                     stiff=False,
                      boundaryTypes=boundaryTypes)
 
     plot_2d(L, ret[-1, :, :, 0])

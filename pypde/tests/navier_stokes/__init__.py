@@ -38,7 +38,7 @@ def viscous_shock_ns():
 
     L = [1.]
 
-    ret = pde_solver(u, tf, L, F=F_navier_stokes, CFL=0.6)
+    ret = pde_solver(u, tf, L, F=F_navier_stokes, cfl=0.6)
 
     plt.plot(ret[-1, :, 2] / ret[-1, :, 0])
     plt.show()
@@ -74,8 +74,8 @@ def taylor_green_vortex_2d():
                      tf,
                      L,
                      F=F_navier_stokes,
-                     CFL=0.9,
-                     N=2,
+                     cfl=0.9,
+                     order=2,
                      boundaryTypes='periodic')
 
     x = linspace(0, L[0], nx)
